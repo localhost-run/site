@@ -93,7 +93,7 @@ module.exports = {
           routeBasePath: '/docs/',
           // Please change this to your repo.
           editUrl:
-            'https://github.com/localhost-run/docs.localhost.run/edit/master/website/',
+            'https://github.com/localhost-run/site/edit/main/',
         },
         blog: {
           showReadingTime: true,
