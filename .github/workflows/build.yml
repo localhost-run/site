@@ -1,0 +1,42 @@
+name: build
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
+        if: github.event_name == 'push'
+        with:
+          ref: build
+          path: build_final
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '12.x'
+      - uses: actions/cache@v2
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+      - name: build
+        run: |
+          npm ci
+          npm run build
+      - name: push
+        if: github.event_name == 'push'
+        run: |
+          git config --global user.email "robot@localhost.run"
+          git config --global user.name "lhr robot"
+          cd build_final
+          git rm -r .
+          tar -C ../build/ -cf - . | tar -xf -
+          git add -A
+          test -z "$(git diff-index --name-only HEAD --)" || git commit -m "build for $GITHUB_SHA"
+          git push
