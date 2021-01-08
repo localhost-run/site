@@ -12,7 +12,7 @@ Mac OS, Windows and most Linux will use openssh. The man page for openssh is [he
 
 ## ssh ...
 
-ssh [-R _tunnel_](#-r-tunnel) localhost.run [-- [--output _output_]]
+ssh [-R _tunnel_](#-r-customdomainbindporthosthostport) localhost.run [-- [[--output _output_](#--output-output)]]
 
 ### -R [[_customdomain_:]](#customdomain)[_bindport_](#bindport):[_host_:_hostport_](#hosthostport)
 
