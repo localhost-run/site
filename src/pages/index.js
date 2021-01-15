@@ -27,7 +27,7 @@ const features = [
     imageUrl: 'img/cloud-download.svg',
     description: (
       <>
-        connect a tunnel now using the ssh client already installed on your computer.
+        Connect a tunnel now using the ssh client already installed on your computer.
       </>
     ),
   },
@@ -72,7 +72,7 @@ const features = [
     imageUrl: 'img/puzzle.svg',
     description: (
       <>
-        tunnels cater to more than just web application development, they can also pass thru encrypted TLS connections and connect non-HTTP protocols.
+        Tunnels cater to more than just web application development, they can also pass thru encrypted TLS connections and connect non-HTTP protocols.
       </>
     ),
   },
