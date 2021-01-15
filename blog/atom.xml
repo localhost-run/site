@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-    <id>https://dev.localhost.run/blog</id>
+    <id>https://localhost.run/blog</id>
     <title>localhost.run Blog</title>
     <updated>2015-10-25T23:29:00.000Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
-    <link rel="alternate" href="https://dev.localhost.run/blog"/>
+    <link rel="alternate" href="https://localhost.run/blog"/>
     <subtitle>localhost.run Blog</subtitle>
-    <icon>https://dev.localhost.run/img/favicon.ico</icon>
+    <icon>https://localhost.run/img/favicon.ico</icon>
 </feed>
