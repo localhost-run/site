@@ -12,7 +12,7 @@ Mac OS, Windows and most Linux will use openssh. The man page for openssh is [he
 
 ## ssh ...
 
-ssh [-R _tunnel_](#-r-customdomainbindporthosthostport) localhost.run [-- [[--output _output_](#--output-output)]]
+ssh [-R _tunnel_](#-r-customdomainbindporthosthostport) localhost.run [-- [[--output _output_](#--output-output)] [[--[no-]inject-http-proxy-headers](#--inject-http-proxy-headers)] [[--[no-]inject-proxy-protocol-header](#--inject-proxy-protocol-header)] [[--proxy-protocol-header-version _version_](#--proxy-protocol-header-version-version)]
 
 ### -R [[_customdomain_:]](#customdomain)[_bindport_](#bindport):[_host_:_hostport_](#hosthostport)
 
@@ -46,10 +46,38 @@ Some operating systems set `localhost` to the ipv6 address `[::1]` while some fr
 
 ### --output _output_
 
-Set the output format for event messages
+Set the output format for event messages:
 
 * text (default)
 * json
+
+### --inject-http-proxy-headers
+
+Enable http proxy headers.
+
+This functionality is *on* by default and can be disabled with `--no-inject-http-proxy-headers`.
+
+See [HTTP Tunnels Proxy headers section](http-tunnels#proxy_headers) for more information.
+
+### --inject-proxy-protocol-header
+
+Enable the [Proxy Protocol TCP header](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt).
+
+This functionality is *off* by default and can be enabled with `--inject-proxy-protocol-header`.
+
+:::warning
+This is an advanced setting and should only be used with applications that expect a Proxy Protocol TCP header.
+:::
+
+### --proxy-protocol-header-version _version_
+
+Set the Proxy Protocol version:
+
+* v1
+* v2
+
+This defaults to `v1` when the header is enabled.
+
 
 ## Examples
 
@@ -62,3 +90,7 @@ Set the output format for event messages
 1. `ssh -R www.example.com:80:localhost:3000 -R example.com:80:localhost:3000 localhost.run` will connect a custom domain tunnel from example.com and www.example.com to localhost on port 3000. See [Custom Domains](custom-domains.md) for more details about using subdomains included with all custom domains.
 
 1. `ssh -R admin.example.com:80:localhost:8000 -R example.com:80:localhost:3000 localhost.run` will connect a custom domain tunnel from example.com to localhost on port 3000 and a custom domain tunnel from admin.example.com to localhost on port 8000. See [Custom Domains](custom-domains.md) for more details about using subdomains included with all custom domains.
+
+1. `ssh -R example.com:80:localhost:3000 localhost.run -- --no-inject-http-proxy-headers` will connect a custom domain tunnel from example.com to localhost on port 3000 and not add HTTP Proxy headers.
+
+1. `ssh -R example.com:80:localhost:3000 localhost.run -- --inject-proxy-protocol-header` will connect a custom domain tunnel from example.com to localhost on port 3000 and send a Proxy Protocol V1 header at the beginning of each TCP connection.
