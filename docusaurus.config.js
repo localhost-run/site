@@ -1,8 +1,8 @@
 module.exports = {
   title: 'localhost.run',
   tagline: '<3 local dev',
-  url: 'https://localhost-run.github.io',
-  baseUrl: '/site/',
+  url: 'https://dev.localhost.run',
+  baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
   favicon: 'img/favicon.ico',
