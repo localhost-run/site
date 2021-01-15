@@ -1,7 +1,7 @@
 module.exports = {
   title: 'localhost.run',
   tagline: '<3 local dev',
-  url: 'https://dev.localhost.run',
+  url: 'https://localhost.run',
   baseUrl: '/',
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
