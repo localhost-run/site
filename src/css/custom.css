@@ -52,3 +52,7 @@
 .feature {
   margin: 30px;
 }
+
+.hero__title {
+  white-space: nowrap;
+}
