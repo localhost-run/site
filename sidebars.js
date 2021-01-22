@@ -8,6 +8,6 @@ module.exports = {
     'tunnel-my',
     'forever-free',
     'security',
-    'troubleshooting',
+    'faq',
   ]
 };

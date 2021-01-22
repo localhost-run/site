@@ -1,11 +1,11 @@
 ---
-id: troubleshooting
-title: Troubleshooting
-sidebar_label: Troubleshooting
-slug: /troubleshooting
+id: faq
+title: FAQ
+sidebar_label: FAQ
+slug: /faq
 ---
 
-## Common issues
+## Common connectivity issues
 
 ### "localhost.run: Permission denied (publickey)" error in your terminal
 
@@ -29,7 +29,7 @@ Many web frameworks generate full URLs using the domain they _think_ they're run
 
 Google the name of your framework + reverse proxy for hints on how to fix issues like this.
 
-### I want to move my domain(s) to a new email login
+## I want to move my domain(s) to a new email login
 
 Sometimes this is because you've lost access to the email you used to sign up, or maybe you simply prefer another email.
 

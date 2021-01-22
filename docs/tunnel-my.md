@@ -29,4 +29,4 @@ If you want to use Wordpress with a free domain you can explore https://wordpres
 
 If you see requests going to `localhost:{your locally running apps port}` in your browsers dev tools when browsing your site through localhost.run check your framework for reverse proxy settings.
 
-More information can be found in [the troubleshooting guide](troubleshooting#i-can-see-requests-to-localhost8080-when-browsing-my-site-thru-localhostrun).
+More information can be found in [the faq](faq#i-can-see-requests-to-localhost8080-when-browsing-my-site-thru-localhostrun).
