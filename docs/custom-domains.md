@@ -30,7 +30,9 @@ In most cases we recommend using a subdomain for your tunnels, for example `tunn
 
 Once you've added your custom domain you will need to set up DNS records with your DNS provider. Your DNS provider is usually the same as where you bought your domain name.
 
-Check how to add a TXT record to your DNS provider and add the record you see in the admin console for your domain name, it will have the format of `_lhr.{your domain name}`.
+Check how to add a TXT record to your DNS provider and add the record you see in the admin console for your domain name, it will have the format of `_lhr.{your domain name}` and a target of your domain ID in quotes.
+
+Some providers add the quotes for you, some expect you to add them. You can check your TXT record at https://toolbox.googleapps.com/apps/dig/#TXT/, you should see an answer that looks like `_lhr.yourdomain.com. 299 IN TXT "630aa6d4-0294-4cf2-a0cf-843e30dd5b6b"`.
 
 ### CNAME vs A records
 
