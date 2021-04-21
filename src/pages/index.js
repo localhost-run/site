@@ -12,7 +12,7 @@ function Terminal() {
       <div className="terminalHeader">terminal</div>
       <div className="terminalBody">
         <code>
-          <p>$ <span className="textSelect command">ssh -R 80:localhost:8080 localhost.run</span></p>
+          <p>$ <span className="textSelect command">ssh -R 80:localhost:8080 nokey@localhost.run</span></p>
           <br />
           <p>yourapp.localhost.run tunneled with tls termination</p>
         </code>

@@ -5,40 +5,44 @@ sidebar_label: Custom Domains
 slug: /custom-domains
 ---
 
-You can use your own domains with localhost.run.
+Custom Domains allow you to use a stable domain for your tunnel with a priority share of the bandwidth on the localhost.run system.
 
-To do this visit https://admin.localhost.run, add your SSH key to your account for authentication and add a custom domain to your account.
+You can use your own domain, or you can use a subdomain of lhr.rocks.
 
-You will need to set up DNS records on your domain to both verify ownership and route traffic to the localhost.run service.
+To create a Custom Domain subscription visit https://admin.localhost.run, add your SSH key to your account for authentication and add your chosen Custom Domain to your account.
+
+If you want to use your own domain name, you will need to set up some DNS records on your domain to both verify ownership and route traffic to the localhost.run service as described below.
+
+If you want to use a subdomain of lhr.rocks this will already be set up for you and you can start using your tunnel immediately.
 
 Once setup is complete you can connect a tunnel to your domain by adding it to the `-R` cli argument like this:
 ```
-ssh -R yourdomain.com:80:localhost:8080 localhost.run
+ssh -R yourdomain.com:80:localhost:8080 plan@localhost.run
 ```
 
-## Plan your custom domain name around what you want to use your domain for
+The `plan@` username is optional but if you have multiple SSH keys it's recommended.
 
-:::warning
-currently you can't change a domain name, so please choose carefully
-:::
+## lhr.rocks subdomains
 
-Will you be using your localhost.run tunnels for development? Will you be hosting other sites that are not behind tunnels on your domain?
+lhr.rocks subdomains require no DNS setup and are the quickest way to get a tunnel with a stable domain name and faster speeds.
 
-In most cases we recommend using a subdomain for your tunnels, for example `tunnel.yourdomain.com`.
+Domains are issued on a first come basis so if your chosen domain is a duplicate please try another one.
 
-## Setup DNS
+## Setup DNS for your own domain
 
-Once you've added your custom domain you will need to set up DNS records with your DNS provider. Your DNS provider is usually the same as where you bought your domain name.
+If you have chosen to use your own domain you will need to set up some DNS records.
 
-Check how to add a TXT record to your DNS provider and add the record you see in the admin console for your domain name, it will have the format of `_lhr.{your domain name}` and a target of your domain ID in quotes.
+Once you've added your custom domain you will be shown these DNS records to set up with your DNS provider. Your DNS provider is usually the same provider that you bought your domain name from.
 
-Some providers add the quotes for you, some expect you to add them. You can check your TXT record at https://toolbox.googleapps.com/apps/dig/#TXT/, you should see an answer that looks like `_lhr.yourdomain.com. 299 IN TXT "630aa6d4-0294-4cf2-a0cf-843e30dd5b6b"`.
+Check how to add a TXT record to your DNS provider and add the record you see in the admin console for your domain name, it will have the format of `_lhr.{your domain name}` and a target of your domain ID.
+
+Some providers add quotes to TXT records for you, please don't be surprised if you see this. You can check your TXT record at https://toolbox.googleapps.com/apps/dig/#TXT/, you should see an answer that looks similar to `_lhr.yourdomain.com. 299 IN TXT "630aa6d4-0294-4cf2-a0cf-843e30dd5b6b"`.
 
 ### CNAME vs A records
 
 The next step is tricky, CNAMEs are the easiest to set up but can't live on apex domains.
 
-An apex domain is the top of your DNS, but it isn't the same as an internet TLD domain, I will offer four examples to illustrate this:
+An apex domain is the top of your DNS, but it isn't the same as an internet TLD domain, I have four examples to explain this:
 * Your DNS allows setting host names under example.com and you want to set your tunnels up on example.com.
   
   This **is** an apex, create A records on example.com.
@@ -79,3 +83,10 @@ You can connect up to 5 tunnels at the same time.
 :::note
 the number of subdomains you can use in a month is limited by letsencrypt limits on certificate generation.
 :::
+
+## Changing your domain name
+
+To change to a new custom domain name follow these steps:
+
+1. Delete your existing custom domain name subscription. This will credit your account for the amount of time remaining on this subscription.
+1. Create a new custom domain subscription. This will use the credit from the cancelled subscription instead of asking for a new payment.

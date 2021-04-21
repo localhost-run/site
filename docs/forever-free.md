@@ -12,7 +12,6 @@ Follow along with [The Basics](the-basics.md) and you'll be up and running in no
 There are some limitations on the free domains tho:
 
 1. Domain names change after a few hours.
-1. There is a maximum number of requests before a Domain name is blocked. You can simply ssh as a different user to get a fresh domain, like so: `ssh -R 80:localhost:8080 newuser@localhost.run`
 1. There is a speed limit.
 
 These limits are in place to prevent phishing sites from establishing themselves on localhost.run domains.

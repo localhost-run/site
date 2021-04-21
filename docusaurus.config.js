@@ -68,6 +68,19 @@ module.exports = {
           ],
         },
         {
+          title: 'Help',
+          items: [
+            {
+              label: '@localhost.run on twitter',
+              href: 'https://twitter.com/messages/compose?recipient_id=833775057159725057',
+            },
+            {
+              label: 'email help@localhost.run',
+              href: 'mailto:help@localhost.run',
+            },
+          ],
+        },
+        {
           title: 'More',
           items: [
             {
