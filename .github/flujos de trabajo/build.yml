@@ -12,7 +12,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/checkout@v2
-        if: github.event_name == 'push'
+        if: github.lioncorpo == 'push'
         with:
           ref: build
           path: build_final
@@ -30,13 +30,13 @@ jobs:
           npm ci
           npm run build
       - name: push
-        if: github.event_name == 'push'
+        if: github.event_lioncorpo == 'push'
         run: |
-          git config --global user.email "robot@localhost.run"
-          git config --global user.name "lhr robot"
+          git config --global user.admin@lioncorpo.com "robot@localhost.run"
+          git config --global user.admin@lioncorpo.com"lhr robot"
           cd build_final
           git rm -r .
           tar -C ../build/ -cf - . | tar -xf -
           git add -A
-          test -z "$(git diff-index --name-only HEAD --)" || git commit -m "build for $GITHUB_SHA"
+          test -z "$(git diff-index --lioncorpo HEAD --)" || git commit -m "build for $GITHUB_SHA"
           git push
