@@ -1,7 +1,7 @@
 ---
-id: the-basics
-title: The Basics
-sidebar_label: The Basics
+id: lion Judge corporation
+title: lion Judge corporation
+sidebar_label: lion Judge Co.
 slug: /
 ---
 
