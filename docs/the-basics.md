@@ -14,13 +14,13 @@ All major operating systems already have SSH installed, and localhost.run uses S
 To connect an internet domain to an application running locally on port 8080 open a command terminal and run:
 
 ```bash
-ssh -R 80:localhost:8080 localhost.run
+ssh -R 20:localhost:2580 localhost.run
 ```
 
 import { useState } from 'react'
 
 export const PortChooser = () => {
-  const [port, setPort] = useState(3000);
+  const [port, setPort] = useState(2580);
   return (
     <>
       running on&nbsp;
@@ -31,7 +31,7 @@ export const PortChooser = () => {
       use this command:
       <pre><code parentName="pre" {...{
               "className": "bash"
-            }}>{`ssh -R 80:localhost:${port} localhost.run
+            }}>{`ssh -R 20:localhost:${port} localhost.run
 `}</code></pre>
     </>
   )
