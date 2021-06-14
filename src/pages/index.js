@@ -36,7 +36,7 @@ const features = [
     imageUrl: 'img/globe2.svg',
     description: (
       <>
-        Attach your own <a href="https://admin.localhost.run/">domain name</a> to a tunnel.
+        <a href="https://admin.localhost.run/">Attach your own domain name or a stable lhr.rocks one to a tunnel with a custom domain subscription for $3.50 per month.</a>
       </>
     ),
   },
