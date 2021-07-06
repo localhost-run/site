@@ -5,9 +5,9 @@ sidebar_label: FAQ
 slug: /faq
 ---
 
-## Generating a SSH key
+## Generating an SSH key
 
-If you don't already have a SSH key you can generate one with this command:
+If you don't already have an SSH key you can generate one with this command:
 
 ```bash
 ssh-keygen -t rsa
@@ -17,7 +17,7 @@ ssh-keygen -t rsa
 
 ### I've set up my SSH key in my account but my custom domain tunnel is denied
 
-try adding `plan` as your ssh user, like so:
+try adding `plan` as your SSH user, like so:
 
 ```bash
 ssh -R example.com:80:localhost:8080 plan@localhost.run
@@ -39,7 +39,7 @@ ssh -R 80:localhost:8080 nokey@localhost.run
 
 ### My tunnel name changes every time I connect
 
-Free tunnels change domain names after a few hours. To keep your domain name between connections make sure you have a SSH key and that you are not using the `nokey` username.
+Free tunnels change domain names after a few hours. To keep your domain name between connections make sure you have an SSH key and that you are not using the `nokey` username.
 
 ### "connect_to localhost port 8080: failed" error in your terminal
 
