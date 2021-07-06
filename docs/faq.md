@@ -25,9 +25,13 @@ ssh -R example.com:80:localhost:8080 plan@localhost.run
 
 If this doesn't fix it then please send an email for help.
 
-### "localhost.run: Permission denied (publickey)" error in your terminal
+### "localhost.run: Permission denied (publickey)" error in your terminal on a free tunnel
 
-try adding `nokey` as your ssh user, like so:
+:::warning
+If you are using a custom domain subscription you need to use an SSH key, this hint isn't for you.
+:::
+
+If you are using a free tunnel you can skip the SSH key check by adding `nokey` as your SSH user, like so:
 
 ```bash
 ssh -R 80:localhost:8080 nokey@localhost.run
