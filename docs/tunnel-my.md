@@ -30,3 +30,36 @@ If you want to use Wordpress with a free domain you can explore https://wordpres
 If you see requests going to `localhost:{your locally running apps port}` in your browsers dev tools when browsing your site through localhost.run check your framework for reverse proxy settings.
 
 More information can be found in [the faq](faq#i-can-see-requests-to-localhost8080-when-browsing-my-site-thru-localhostrun).
+
+## SSH servers
+
+With a custom domain plan it is possible to tunnel to a SSH server using stunnel on the SSH client.
+
+1. On the SSH server make sure your localhost.run tunnel is connected:
+
+   ```bash
+   ssh -R tunnel.example.com:80:localhost:22 plan@cd.localhost.run
+   ```
+
+   This must be running to connect to SSH from your client computer.
+
+   The rest of this guide is for the client computer.
+
+1. Install [stunnel](https://www.stunnel.org/) on your client SSH computer.
+
+   stunnel is an application that wraps TCP, like SSH, in TLS.
+
+1. Configure it to wrap connections to localhost:2222 in TLS and send them to your custom domain by creating a file named `stunnel.conf`
+
+   ```none title="stunnel.conf"
+   foreground = yes
+   pid = ./stunnel.pid
+   [lhr]
+   client = yes
+   accept = localhost:2222
+   connect = tunnel.example.com:443
+   ```
+
+1. Run `stunnel stunnel.conf` in a terminal. This command must be running to connect to SSH.
+
+1. Run `ssh localhost -p 2222` to connect over the tunnels to your SSH server.
