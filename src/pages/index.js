@@ -104,7 +104,7 @@ function Home() {
         <div className="container">
           <h1 className="hero__title">{siteConfig.title}</h1>
           <p className="hero__subtitle">{siteConfig.tagline}</p>
-          <p>connect a tunnel to your web appplication running on port 8080 now with</p>
+          <p>connect a tunnel to your web application running on port 8080 now with</p>
           <Terminal />
           <div className={styles.buttons}>
             <Link
