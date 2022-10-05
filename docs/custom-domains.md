@@ -90,3 +90,9 @@ To change to a new custom domain name follow these steps:
 
 1. Delete your existing custom domain name subscription. This will credit your account for the amount of time remaining on this subscription.
 1. Create a new custom domain subscription. This will use the credit from the cancelled subscription instead of asking for a new payment.
+
+## Cancelling a subscription
+
+To cancel a subscription delete your custom domain.
+
+For any other billing related help please email help@localhost.run .
