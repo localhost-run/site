@@ -12,7 +12,7 @@ Mac OS, Windows and most Linux will use openssh. The man page for openssh is [he
 
 ## ssh ...
 
-ssh [-R _tunnel_](#-r-customdomainbindporthosthostport) localhost.run [-- [[--output _output_](#--output-output)] [[--[no-]inject-http-proxy-headers](#--inject-http-proxy-headers)] [[--[no-]inject-proxy-protocol-header](#--inject-proxy-protocol-header)] [[--proxy-protocol-header-version _version_](#--proxy-protocol-header-version-version)]
+ssh [-R _tunnel_](#-r-customdomainbindporthosthostport) localhost.run [-- [[--output _output_](#--output-output)] [[--[no-]inject-http-proxy-headers](#--inject-http-proxy-headers)] [[--proxy-protocol-header-version _version_](#--proxy-protocol-header-version-version)]
 
 ### -R [[_customdomain_:]](#customdomain)[_bindport_](#bindport):[_host_:_hostport_](#hosthostport)
 
@@ -59,19 +59,9 @@ This functionality is *on* by default and can be disabled with `--no-inject-http
 
 See [HTTP Tunnels Proxy headers section](http-tunnels#proxy_headers) for more information.
 
-### --inject-proxy-protocol-header
-
-Enable the [Proxy Protocol TCP header](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt).
-
-This functionality is *off* by default and can be enabled with `--inject-proxy-protocol-header`.
-
-:::warning
-This is an advanced setting and should only be used with applications that expect a Proxy Protocol TCP header.
-:::
-
 ### --proxy-protocol-header-version _version_
 
-Set the Proxy Protocol version:
+Enable the [Proxy Protocol TCP header](https://www.haproxy.org/download/1.8/doc/proxy-protocol.txt) and set the Proxy Protocol version:
 
 * v1
 * v2
