@@ -1,6 +1,6 @@
 ---
-id: the-basics
-title: The Basics
+id: 3lv1n-basic
+title: xamp server Basics
 sidebar_label: The Basics
 slug: /
 ---
