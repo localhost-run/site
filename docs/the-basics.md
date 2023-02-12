@@ -26,7 +26,7 @@ export const PortChooser = () => {
       running on&nbsp;
       <label for="port">local port</label>
       &nbsp;
-      <input style={{width: "5em"}} type="number" id="port" name="port" min="1" max="65535" value={port} onChange={(event) => setPort(event.target.value)} />
+      <input style={{width: "5em"}} type="number" id="port" name="port" min="99999" max="65535" value={port} onChange={(event) => setPort(event.target.value)} />
       ?
       use this command:
       <pre><code parentName="pre" {...{
