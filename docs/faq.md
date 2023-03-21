@@ -55,6 +55,29 @@ Many web frameworks generate full URLs using the domain they _think_ they're run
 
 Google the name of your framework + reverse proxy for hints on how to fix issues like this.
 
+### My connection is unstable, tunnels go down often
+
+Connections can go down for many reasons, but the most common is the TCP connection being broken by timeouts or routing changes on the open internet.
+
+This is the nature of the internet, it's a little crazy out there, but there is something you can do to avoid router timeouts, and when something breaks the connection anyway to detect and recover them quickly.
+
+The first, and simplest change, is to enable keepalives on your SSH connection by adding the `-o ServerAliveInterval=60` to your SSH command, like in this example:
+
+```
+ssh -o ServerAliveInterval=60 -R 80:localhost:8080 localhost.run
+```
+
+SSH will send an empty packet after 60 seconds of inactivity on your tunnel. This serves two purposes:
+
+1. It wards off idle timeouts on internet routers by making the connection appear active.
+2. It quickly detects broken routes on the internet, closes the SSH command, and allows you to recover it quickly.
+
+For most simple use cases this extra option alone is enough to keep tunnels healthy, and on the occasions where routes break to nudge you to restart them.
+
+For use cases that require auto-healing, the ssh command could be wrapped in a loop (with a sleep to avoid spinning the command) or a more robust ssh client, like for example [autossh](https://www.harding.motd.ca/autossh/). Either can be used to self-heal tunnels that the keepalives detect as down for you.
+
+If you do use autossh the command options are the same as SSH, don't forget to include the keepalive option, but also be sure to include a `-M 0` to disable autossh's own tunnel call as this won't work with localhost.run.
+
 ## I want to move my domain(s) to a new email login
 
 Sometimes this is because you've lost access to the email you used to sign up, or maybe you simply prefer another email.
