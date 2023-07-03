@@ -13,6 +13,8 @@ If you don't already have an SSH key you can generate one with this command:
 ssh-keygen -t rsa
 ```
 
+[GitLab](https://docs.gitlab.com/ee/ssh/) and [GitHub](https://docs.github.com/en/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent) have detailed documentation on creating SSH keys, once created you need to upload the generated file to https://admin.localhost.run/ .
+
 ## Common connectivity issues
 
 ### I've set up my SSH key in my account but my custom domain tunnel is denied
