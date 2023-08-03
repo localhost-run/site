@@ -1,4 +1,4 @@
-merge.md
+commit changes.md
 name: build
 
 on:
