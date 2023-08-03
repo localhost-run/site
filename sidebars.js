@@ -1,4 +1,5 @@
-module.exports = {
+merge.md
+  module.exports = {
   docs: [
     'the-basics',
     'cli',
