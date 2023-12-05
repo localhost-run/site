@@ -14,7 +14,7 @@ function Terminal() {
         <code>
           <p>$ <span className="textSelect command">ssh -R 80:localhost:8080 nokey@localhost.run</span></p>
           <br />
-          <p>yourapp.localhost.run tunneled with tls termination</p>
+          <p>yourapp.localhost.run tunnelled with tls termination</p>
         </code>
       </div>
     </pre>
@@ -72,7 +72,7 @@ const features = [
     imageUrl: 'img/puzzle.svg',
     description: (
       <>
-        Tunnels cater to more than just web application development, they can also pass thru encrypted TLS connections and connect non-HTTP protocols.
+        Tunnels cater to more than just web application development, they can also pass through encrypted TLS connections and connect non-HTTP protocols.
       </>
     ),
   },
