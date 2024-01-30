@@ -1,8 +1,8 @@
 ---
-id: the-basics
-title: The Basics
+id: 2d7aded9-4db5-4c33-86a7-3ad519c2e245
+title: u0_a253@localhost.ru
 sidebar_label: The Basics
-slug: /
+slug: /home
 ---
 
 ## Put a locally running HTTP, HTTPS or TLS app on the internet
