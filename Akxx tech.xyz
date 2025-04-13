@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>AKXX Tech</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+    }
+
+    header {
+      background-color: #333;
+      color: white;
+      padding: 20px;
+      text-align: center;
+    }
+
+    nav {
+      background-color: #444;
+      display: flex;
+      justify-content: center;
+      padding: 10px 0;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      margin: 5px;
+    }
+
+    nav a:hover {
+      background-color: #555;
+    }
+
+    .section {
+      display: none;
+      padding: 20px;
+    }
+
+    .active {
+      display: block;
+    }
+
+    .home-features {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+    }
+
+    .feature-card {
+      width: 300px;
+      text-align: center;
+      padding: 15px;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    .feature-card img {
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      max-height: 200px;
+      object-fit: cover;
+    }
+
+    .home-cta {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .home-cta a {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 10px 20px;
+      background-color: #007bff;
+      color: white;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+
+    .container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .card {
+      padding: 20px;
+      text-align: center;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      width: 250px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 10px;
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AKXX Tech</h1>
+    <p>Your Source for Apps, Games & IPL Updates</p>
+  </header>
+
+  <nav>
+    <a href="#" onclick="showSection('home')">Home</a>
+    <a href="#" onclick="showSection('news')">IPL News</a>
+    <a href="#" onclick="showSection('games')">Games</a>
+    <a href="#" onclick="showSection('apps')">Apps</a>
+    <a href="#" onclick="showSection('contact')">Contact</a>
+  </nav>
+
+  <section id="home" class="section active">
+    <h2>Welcome to AKXX Tech</h2>
+    <p>Discover the latest and greatest in mobile apps, exciting games, and stay up-to-date with all the action from the Indian Premier League. Your digital playground starts here!</p>
+    <div class="home-features">
+      <div class="feature-card">
+        <img src="/sks/782c4881359e77df494b326c3bb19f24.jpg" alt="Apps Icon">
+        <h3>Explore Apps</h3>
+        <p>Find reviews, downloads, and recommendations for the newest and most popular mobile applications.</p>
+        <a href="#apps" onclick="showSection('apps')">Browse Apps</a>
+      </div>
+      <div class="feature-card">
+        <img src="/sks/gaming-competition-moment-teams-facing-each-other-concentration-moment-finals-esports-scaled.jpg" alt="Games Icon">
+        <h3>Dive into Games</h3>
+        <p>Discover thrilling mobile games across various genres. Get download links and stay informed about new releases.</p>
+        <a href="#games" onclick="showSection('games')">Explore Games</a>
+      </div>
+      <div class="feature-card">
+        <img src="/sks/ipl-2025-768x576.jpg" alt="IPL Icon">
+        <h3>IPL Daily Updates</h3>
+        <p>Get the latest scores, match highlights, and news from the Indian Premier League. Never miss a boundary!</p>
+        <a href="#news" onclick="showSection('news')">Read IPL News</a>
+      </div>
+    </div>
+    <div class="home-cta">
+      <p>Ready to explore? Check out our latest updates!</p>
+      <a href="#news" onclick="showSection('news')">Latest IPL News</a>
+    </div>
+  </section>
+
+  <section id="news" class="section">
+    <h2>Latest IPL News</h2>
+    <ul id="news-list">
+      <li>
+        <strong>Abhishek Sharma's Record-Breaking Innings:</strong>
+        <p>Abhishek Sharma scored a sensational 141 runs off 55 balls, leading Sunrisers Hyderabad to an eight-wicket victory over Punjab Kings. This innings marked the highest score by a player in a run chase in IPL history.</p>
+      </li>
+      <li>
+        <strong>Sunrisers Hyderabad's Historic Chase:</strong>
+        <p>Sunrisers Hyderabad chased down a daunting target of 246 runs set by Punjab Kings, completing the IPL’s second-highest successful run chase with nine balls to spare.</p>
+      </li>
+      <li>
+        <strong>Chennai Super Kings' Continued Struggles:</strong>
+        <p>Chennai Super Kings suffered their fifth consecutive loss, falling to Kolkata Knight Riders by eight wickets. Despite reinstating MS Dhoni as captain, CSK posted their lowest home total of 103-9.</p>
+      </li>
+      <li>
+        <strong>Upcoming Match – Rajasthan Royals vs. Royal Challengers Bengaluru:</strong>
+        <p>Rajasthan Royals will face Royal Challengers Bengaluru today at the Sawai Mansingh Stadium in Jaipur. The match is scheduled to start at 3:00 PM IST.</p>
+      </li>
+      <li>
+        <strong>Upcoming Match – Delhi Capitals vs. Mumbai Indians:</strong>
+        <p>Delhi Capitals will host Mumbai Indians today at the Arun Jaitley Stadium in Delhi. The match is scheduled to start at 7:00 PM IST.</p>
+      </li>
+    </ul>
+    <p style="margin-top: 30px; text-align: center; font-weight: bold;">News will be updated daily.</p>
+  </section>
+
+  <section id="games" class="section">
+    <h2>Top Games</h2>
+    <div class="container">
+      <div class="card">
+        <h3>Game Changer 5 V4</h3>
+        <a href="https://game-changer-5.en.uptodown.com/android" target="_blank">
+          <button>Download</button>
+        </a>
+      </div>
+      <div class="card">
+        <h3>Real Cricket 21 Mod APK</h3>
+        <a href="https://cricket-2021.en.softonic.com/android" target="_blank">
+          <button>Download</button>
+        </a>
+      </div>
+      <div class="card">
+        <h3>ICC Cricket Mobile</h3>
+        <a href="https://icc-cricket-mobile.en.softonic.com/android/download" target="_blank">
+          <button>Download</button>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="apps" class="section">
+    <h2>Latest Apps</h2>
+    <p style="text-align:center;">Apps will be uploaded soon. Stay tuned!</p>
+  </section>
+
+  <section id="contact" class="section">
+    <h2>Contact Us</h2>
+    <p>For <strong style="color: black;">new updates</strong> and <strong style="color: black;">information</strong>, contact <strong style="color: #00bfff;">'AKXX Tech'</strong>.</p>
+  </section>
+
+  <footer>
+    &copy; 2025 AKXX Tech. All rights reserved.
+  </footer>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(section => {
+        section.classList.remove('active');
+      });
+      document.getElementById(id).classList.add('active');
+    }
+  </script>
+</body>
+</html>
