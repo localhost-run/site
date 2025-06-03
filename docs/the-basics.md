@@ -1,7 +1,7 @@
 ---
-id: the-basics
-title: The Basics
-sidebar_label: The Basics
+id: HACKERS BOOM
+title: HACKER BOOM
+sidebar_label: The BOOM
 slug: /
 ---
 
