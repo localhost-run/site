@@ -1,0 +1,3437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire Tournament - Admin Panel</title>
+    
+    <!-- 
+    ADMIN SETUP INSTRUCTIONS:
+    
+    1. Replace the firebaseConfig object with your actual Firebase configuration
+    2. Update the ADMIN_UIDS and ADMIN_EMAILS arrays with your admin credentials:
+       - ADMIN_UIDS: Add the UIDs of your admin users
+       - ADMIN_EMAILS: Add the email addresses of your admin users
+    
+    3. For testing purposes, you can:
+       - Use any email that contains 'admin@' or 'test'
+       - Or add your email to the ADMIN_EMAILS array
+    
+    4. To get your UID:
+       - Sign up/login to the user panel first
+       - Check the browser console or Firebase Console for your UID
+       - Add that UID to the ADMIN_UIDS array
+    
+    CURRENT ADMIN CREDENTIALS:
+    - UID: lwrLF01gp1hcEwF0rZr4vu6oeju2
+    - Email: rahulkashyap10091009@gmail.com
+    - Password: @rahul420
+    
+    EXAMPLE:
+    const ADMIN_UIDS = ['lwrLF01gp1hcEwF0rZr4vu6oeju2', 'xyz789uvw012'];
+    const ADMIN_EMAILS = ['rahulkashyap10091009@gmail.com', 'admin2@example.com'];
+    -->
+    
+    <!-- Firebase SDK v9+ (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, onSnapshot, query, orderBy, limit, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        
+        // TODO: Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Make Firebase available globally
+        window.auth = auth;
+        window.db = db;
+        window.storage = storage;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.collection = collection;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.getDocs = getDocs;
+        window.updateDoc = updateDoc;
+        window.addDoc = addDoc;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.limit = limit;
+        window.where = where;
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .admin-email {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* Navigation */
+        .nav-tabs {
+            display: flex;
+            background: white;
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+
+        .nav-tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+        }
+
+        .nav-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Content Sections */
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .search-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .search-input {
+            padding: 0.5rem 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            min-width: 250px;
+            background: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+        }
+
+        .search-results {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-top: 1rem;
+        }
+
+        /* Leaderboard Styles */
+        .leaderboard-tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .leaderboard-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .leaderboard-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .leaderboard-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .leaderboard-stat .stat-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .leaderboard-stat .stat-content {
+            flex: 1;
+        }
+
+        .leaderboard-stat .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .leaderboard-stat .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .leaderboard-container {
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard-content {
+            display: none;
+        }
+
+        .leaderboard-content.active {
+            display: block;
+        }
+
+        .match-selector {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            background: #f8f9fa;
+        }
+
+        .leaderboard-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 1rem;
+            border-top: 1px solid #f0f0f0;
+        }
+
+        .refresh-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+
+        /* Notifications Styles */
+        .notification-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .notification-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .notification-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification-stat .stat-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .notification-stat .stat-content {
+            flex: 1;
+        }
+
+        .notification-stat .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .notification-stat .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .notification-footer {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #ffc107;
+        }
+
+        .notification-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .notification-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .notification-status.read {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .notification-status.unread {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        /* Transaction Management Styles */
+        .transaction-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .transaction-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .transaction-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .transaction-stat .stat-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .transaction-stat .stat-content {
+            flex: 1;
+        }
+
+        .transaction-stat .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .transaction-stat .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .transaction-footer {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #dc3545;
+        }
+
+        .transaction-info p {
+            margin: 0;
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .transaction-type {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .transaction-type.add_money {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .transaction-type.withdraw {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .transaction-type.match_join {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .transaction-type.prize_award {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .transaction-type.other {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+
+        /* Dashboard Stats */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.5rem;
+        }
+
+        .stat-content {
+            flex: 1;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* Status badges */
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-banned {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-approved {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-live {
+            background: #cce5ff;
+            color: #004085;
+        }
+
+        /* Auth */
+        .auth-container {
+            max-width: 400px;
+            margin: 4rem auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+        }
+
+        .auth-title {
+            text-align: center;
+            margin-bottom: 2rem;
+            color: #667eea;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        /* Error */
+        .error {
+            background: #ff4757;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Success */
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-container">
+            <h1 class="auth-title">Admin Panel</h1>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="adminEmail" class="form-input" placeholder="Enter admin email">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="adminPassword" class="form-input" placeholder="Enter admin password">
+            </div>
+            <button class="btn" onclick="adminLogin()" style="width: 100%;">Login</button>
+        </div>
+
+        <!-- Main Admin Panel -->
+        <div id="mainAdminPanel" style="display: none;">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="logo">Free Fire Tournament - Admin</div>
+                    <div class="admin-info">
+                        <div class="admin-email" id="adminEmailDisplay">admin@example.com</div>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="nav-tabs">
+                <div class="nav-tab active" onclick="showSection('dashboard')">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('matches')">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Matches</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('users')">
+                    <i class="fas fa-users"></i>
+                    <span>Users</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('transactions')">
+                    <i class="fas fa-exchange-alt"></i>
+                    <span>Transactions</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('banners')">
+                    <i class="fas fa-images"></i>
+                    <span>Banners</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('scanner')">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Scanner</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('referral')">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Referrals</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('leaderboard')">
+                    <i class="fas fa-trophy"></i>
+                    <span>Leaderboard</span>
+                </div>
+                <div class="nav-tab" onclick="showSection('notifications')">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </div>
+            </div>
+
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="content-section active">
+                <div class="dashboard-stats">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalUsers">0</div>
+                            <div class="stat-label">Total Users</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-gamepad"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalMatches">0</div>
+                            <div class="stat-label">Total Matches</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-wallet"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalAddedBalance">₹0</div>
+                            <div class="stat-label">Total Added Balance</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="totalWinningBalance">₹0</div>
+                            <div class="stat-label">Total Winning Balance</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="pendingRequests">0</div>
+                            <div class="stat-label">Pending Add Money</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div class="stat-content">
+                            <div class="stat-value" id="pendingWithdraws">0</div>
+                            <div class="stat-label">Pending Withdrawals</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Recent Transactions</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentTransactions">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Matches Section -->
+            <div id="matchesSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Create New Match</h3>
+                    </div>
+                    <form id="createMatchForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Title</label>
+                                <input type="text" id="matchTitle" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Game</label>
+                                <input type="text" id="matchGame" class="form-input" value="Free Fire" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Start Time</label>
+                                <input type="datetime-local" id="matchStartTime" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Entry Fee (₹)</label>
+                                <input type="number" id="matchEntryFee" class="form-input" required>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Max Players</label>
+                                <input type="number" id="matchMaxPlayers" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Banner Image URL</label>
+                                <input type="url" id="matchBannerUrl" class="form-input" placeholder="https://example.com/banner.jpg">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Room ID</label>
+                                <input type="text" id="matchRoomId" class="form-input" placeholder="Enter room ID">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Room Password</label>
+                                <input type="text" id="matchRoomPassword" class="form-input" placeholder="Enter room password">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Description</label>
+                            <textarea id="matchDescription" class="form-input" rows="3" required></textarea>
+                        </div>
+                        <button type="submit" class="btn">Create Match</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">All Matches</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Game</th>
+                                    <th>Start Time</th>
+                                    <th>Entry Fee</th>
+                                    <th>Players</th>
+                                    <th>Room Details</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matchesTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="usersSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">User Management</h3>
+                        <div class="search-container">
+                            <input type="text" id="userSearchInput" class="search-input" placeholder="Search users by name, email, or phone...">
+                            <button onclick="clearUserSearch()" class="btn btn-secondary" style="margin-left: 0.5rem;">Clear</button>
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Phone</th>
+                                    <th>Added Balance</th>
+                                    <th>Winning Balance</th>
+                                    <th>Status</th>
+                                    <th>Joined</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTable">
+                            </tbody>
+                        </table>
+                        <div id="userSearchResults" class="search-results" style="display: none;">
+                            <p>No users found matching your search.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Section -->
+            <div id="transactionsSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Add Money Requests</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>UPI ID</th>
+                                    <th>UTR Number</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="addMoneyRequestsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Withdraw Requests</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Amount</th>
+                                    <th>UPI ID</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="withdrawRequestsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">💰 Transaction History Management</h3>
+                        <div class="transaction-actions">
+                            <button class="btn btn-danger" onclick="deleteAllTransactions()">
+                                <i class="fas fa-trash"></i> Delete All Transactions
+                            </button>
+                            <button class="btn btn-secondary" onclick="loadTransactionHistory()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="transaction-stats">
+                        <div class="transaction-stat">
+                            <div class="stat-icon">📊</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalTransactions">0</div>
+                                <div class="stat-label">Total Transactions</div>
+                            </div>
+                        </div>
+                        <div class="transaction-stat">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalTransactionAmount">₹0</div>
+                                <div class="stat-label">Total Amount</div>
+                            </div>
+                        </div>
+                        <div class="transaction-stat">
+                            <div class="stat-icon">📅</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="oldestTransaction">-</div>
+                                <div class="stat-label">Oldest Transaction</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactionHistoryTable">
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="transaction-footer">
+                        <div class="transaction-info">
+                            <p><strong>⚠️ Warning:</strong> Deleting all transactions will permanently remove them from the database. This action cannot be undone and will affect user transaction history.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banners Section -->
+            <div id="bannersSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Manage Banners</h3>
+                    </div>
+                    <form id="createBannerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Image URL</label>
+                                <input type="url" id="bannerImageUrl" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Order</label>
+                                <input type="number" id="bannerOrder" class="form-input" min="1" max="3" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Add Banner</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Current Banners</h3>
+                    </div>
+                    <div id="bannersList">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Scanner Section -->
+            <div id="scannerSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Scanner Management</h3>
+                    </div>
+                    <form id="scannerForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">QR Code Image URL</label>
+                                <input type="url" id="scannerQrImageUrl" class="form-input" placeholder="https://example.com/qr-code.jpg">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">QR Code Data (Alternative)</label>
+                                <input type="text" id="scannerQrCode" class="form-input" placeholder="Enter QR code data if no image">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">UPI ID</label>
+                                <input type="text" id="scannerUpiId" class="form-input" placeholder="Enter UPI ID">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Instructions</label>
+                            <textarea id="scannerInstructions" class="form-input" rows="3" placeholder="Enter payment instructions for users"></textarea>
+                        </div>
+                        <button type="submit" class="btn">Update Scanner</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Current Scanner Settings</h3>
+                    </div>
+                    <div id="scannerSettings">
+                        <div class="scanner-info">
+                            <p><strong>QR Code Image:</strong> <span id="currentQrImageUrl">Not set</span></p>
+                            <p><strong>QR Code Data:</strong> <span id="currentQrCode">Not set</span></p>
+                            <p><strong>UPI ID:</strong> <span id="currentUpiId">Not set</span></p>
+                            <p><strong>Instructions:</strong> <span id="currentInstructions">Not set</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Referral System Section -->
+            <div id="referralSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Referral System Management</h3>
+                    </div>
+                    <form id="referralForm">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Referrer Bonus Amount (₹)</label>
+                                <input type="number" id="referrerBonus" class="form-input" placeholder="500" value="500">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">New User Bonus Amount (₹)</label>
+                                <input type="number" id="newUserBonus" class="form-input" placeholder="500" value="500">
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">Default Signup Bonus (₹)</label>
+                                <input type="number" id="defaultSignupBonus" class="form-input" placeholder="1000" value="1000">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn">Update Referral Settings</button>
+                    </form>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Referral History</h3>
+                    </div>
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Referrer</th>
+                                    <th>Referred User</th>
+                                    <th>Referrer Bonus</th>
+                                    <th>User Bonus</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="referralTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div id="leaderboardSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🏆 Leaderboard Management</h3>
+                        <div class="leaderboard-tabs">
+                            <button class="leaderboard-tab active" onclick="switchLeaderboardTab('global')">Global Rankings</button>
+                            <button class="leaderboard-tab" onclick="switchLeaderboardTab('matches')">Match Winners</button>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-stats">
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">👑</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="topPlayerName">Loading...</div>
+                                <div class="stat-label">Top Player</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="topPlayerBalance">₹0</div>
+                                <div class="stat-label">Highest Balance</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">🎮</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalPlayers">0</div>
+                                <div class="stat-label">Total Players</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-container">
+                        <div id="globalLeaderboard" class="leaderboard-content active">
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>User</th>
+                                            <th>Email</th>
+                                            <th>Balance</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leaderboardTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div id="matchLeaderboard" class="leaderboard-content">
+                            <div class="match-selector">
+                                <select id="matchSelector" class="form-input" onchange="loadMatchLeaderboard()">
+                                    <option value="">Select a match...</option>
+                                </select>
+                            </div>
+                            <div class="table-container">
+                                <table class="table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>User</th>
+                                            <th>Game Name</th>
+                                            <th>Email</th>
+                                            <th>Balance</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="matchLeaderboardTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-footer">
+                        <div class="refresh-btn" onclick="refreshLeaderboard()">
+                            <i class="fas fa-sync-alt"></i> Refresh Leaderboard
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Section -->
+            <div id="notificationsSection" class="content-section">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">🔔 Notifications Management</h3>
+                        <div class="notification-actions">
+                            <button class="btn btn-danger" onclick="deleteAllNotifications()">
+                                <i class="fas fa-trash"></i> Delete All Notifications
+                            </button>
+                            <button class="btn btn-secondary" onclick="loadNotifications()">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="notification-stats">
+                        <div class="notification-stat">
+                            <div class="stat-icon">📧</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalNotifications">0</div>
+                                <div class="stat-label">Total Notifications</div>
+                            </div>
+                        </div>
+                        <div class="notification-stat">
+                            <div class="stat-icon">👁️</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="readNotifications">0</div>
+                                <div class="stat-label">Read Notifications</div>
+                            </div>
+                        </div>
+                        <div class="notification-stat">
+                            <div class="stat-icon">🔔</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="unreadNotifications">0</div>
+                                <div class="stat-label">Unread Notifications</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="table-container">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Title</th>
+                                    <th>Message</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notificationsTable">
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="notification-footer">
+                        <div class="notification-info">
+                            <p><strong>Note:</strong> Deleting all notifications will permanently remove them from the database. This action cannot be undone.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentAdmin = null;
+        let currentSection = 'dashboard';
+
+        // Admin UIDs and Emails - UPDATE THESE WITH YOUR ACTUAL ADMIN CREDENTIALS
+        const ADMIN_UIDS = ['lwrLF01gp1hcEwF0rZr4vu6oeju2', 'YOUR_ADMIN_UID_2'];
+        const ADMIN_EMAILS = ['rahulkashyap10091009@gmail.com', 'admin@example.com', 'admin2@example.com'];
+
+        // Scanner data for user panel
+        let scannerData = {
+            qrCode: '',
+            upiId: '',
+            instructions: ''
+        };
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add search functionality
+            const userSearchInput = document.getElementById('userSearchInput');
+            if (userSearchInput) {
+                userSearchInput.addEventListener('input', function() {
+                    loadUsers();
+                });
+            }
+            
+            // Check if admin is already logged in
+            onAuthStateChanged(auth, function(user) {
+                if (user) {
+                    // Check if user is admin
+                    isAdminUser(user).then(isAdmin => {
+                        if (isAdmin) {
+                            currentAdmin = user;
+                            showMainAdminPanel();
+                            loadDashboardData();
+                        } else {
+                            // User is logged in but not admin
+                            alert('Access denied. Admin privileges required.');
+                            auth.signOut();
+                            showAuthSection();
+                        }
+                    });
+                } else {
+                    showAuthSection();
+                }
+            });
+        });
+
+        // Helper function to check if user is admin
+        async function isAdminUser(user) {
+            console.log('Checking admin status for user:', user.email, 'UID:', user.uid);
+            
+            // First check hardcoded admin lists
+            if (ADMIN_UIDS.includes(user.uid)) {
+                console.log('✅ Admin access granted via UID');
+                return true;
+            }
+            
+            if (user.email && ADMIN_EMAILS.includes(user.email)) {
+                console.log('✅ Admin access granted via email');
+                return true;
+            }
+            
+            // Check Firestore for admin field
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    console.log('User data from Firestore:', userData);
+                    if (userData.admin === true) {
+                        console.log('✅ Admin access granted via Firestore admin field');
+                        return true;
+                    }
+                } else {
+                    console.log('❌ User document not found in Firestore');
+                }
+            } catch (error) {
+                console.error('Error checking admin status:', error);
+            }
+            
+            // For testing purposes - allow any user with admin@ in email
+            if (user.email && user.email.includes('admin@')) {
+                console.log('✅ Admin access granted via admin@ email');
+                return true;
+            }
+            
+            // Temporary: Allow any user for testing (REMOVE THIS IN PRODUCTION)
+            if (user.email && (user.email.includes('test') || user.email.includes('admin'))) {
+                console.log('✅ Temporary admin access granted for testing:', user.email);
+                return true;
+            }
+            
+            console.log('❌ No admin access found');
+            return false;
+        }
+
+        // Function to make a user admin
+        async function makeUserAdmin(userId) {
+            try {
+                await updateDoc(doc(db, 'users', userId), {
+                    admin: true
+                });
+                alert('User has been made admin successfully!');
+                loadUsers(); // Refresh users list
+            } catch (error) {
+                alert('Failed to make user admin: ' + error.message);
+            }
+        }
+
+        // Function to remove admin from user
+        async function removeUserAdmin(userId) {
+            try {
+                await updateDoc(doc(db, 'users', userId), {
+                    admin: false
+                });
+                alert('Admin privileges removed successfully!');
+                loadUsers(); // Refresh users list
+            } catch (error) {
+                alert('Failed to remove admin privileges: ' + error.message);
+            }
+        }
+
+        // Auth functions
+        async function adminLogin() {
+            const email = document.getElementById('adminEmail').value;
+            const password = document.getElementById('adminPassword').value;
+
+            if (!email || !password) {
+                alert('Please enter both email and password');
+                return;
+            }
+
+            try {
+                console.log('Attempting login with:', email);
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+                
+                console.log('Login successful, ensuring user document exists...');
+                
+                // Ensure user document exists
+                await ensureUserDocument(user);
+                
+                console.log('Checking admin status...');
+                
+                // Check if user is admin
+                const isAdmin = await isAdminUser(user);
+                console.log('Admin check result:', isAdmin);
+                
+                if (isAdmin) {
+                    currentAdmin = user;
+                    showMainAdminPanel();
+                    loadDashboardData();
+                    console.log('✅ Admin login successful:', user.email);
+                } else {
+                    alert('Access denied. Admin privileges required. Please contact the administrator.');
+                    console.log('❌ Access denied for user:', user.email);
+                    auth.signOut();
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                if (error.code === 'auth/user-not-found') {
+                    alert('User not found. Please check your email.');
+                } else if (error.code === 'auth/wrong-password') {
+                    alert('Incorrect password. Please try again.');
+                } else if (error.code === 'auth/invalid-email') {
+                    alert('Invalid email format.');
+                } else {
+                    alert('Login failed: ' + error.message);
+                }
+            }
+        }
+
+        function logout() {
+            auth.signOut();
+            showAuthSection();
+        }
+
+        // UI functions
+        function showAuthSection() {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('mainAdminPanel').style.display = 'none';
+        }
+
+        function showMainAdminPanel() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('mainAdminPanel').style.display = 'block';
+            document.getElementById('adminEmailDisplay').textContent = currentAdmin.email;
+        }
+
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            
+            // Show selected section
+            document.getElementById(section + 'Section').classList.add('active');
+            document.querySelector(`[onclick="showSection('${section}')"]`).classList.add('active');
+            
+            currentSection = section;
+            
+            // Load section-specific data
+            switch(section) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'matches':
+                    loadMatches();
+                    break;
+                case 'users':
+                    loadUsers();
+                    break;
+                case 'transactions':
+                    loadTransactions();
+                    break;
+                case 'banners':
+                    loadBanners();
+                    break;
+                case 'scanner':
+                    loadScannerSettings();
+                    break;
+                case 'leaderboard':
+                    loadLeaderboard();
+                    break;
+                case 'referral':
+                    loadReferrals();
+                    loadReferralSettings();
+                    break;
+                case 'notifications':
+                    loadNotifications();
+                    break;
+            }
+        }
+
+        // Data loading functions
+        async function loadDashboardData() {
+            try {
+                console.log('Loading dashboard data...');
+                
+                // Load users count
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const totalUsers = usersSnapshot.size;
+                console.log('Total users:', totalUsers);
+                
+                // Calculate total balances
+                let totalAddedBalance = 0;
+                let totalWinningBalance = 0;
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    totalAddedBalance += userData.addedBalance || 0;
+                    totalWinningBalance += userData.winningBalance || 0;
+                });
+                
+                // Load matches count
+                const matchesSnapshot = await getDocs(collection(db, 'matches'));
+                const totalMatches = matchesSnapshot.size;
+                console.log('Total matches:', totalMatches);
+                
+                // Load pending requests
+                let pendingRequests = 0;
+                try {
+                    const pendingRequestsSnapshot = await getDocs(query(collection(db, 'addMoneyRequests'), where('status', '==', 'pending')));
+                    pendingRequests = pendingRequestsSnapshot.size;
+                } catch (error) {
+                    console.log('No addMoneyRequests collection yet:', error.message);
+                }
+                
+                // Load pending withdraw requests
+                let pendingWithdraws = 0;
+                try {
+                    const pendingWithdrawsSnapshot = await getDocs(query(collection(db, 'withdrawRequests'), where('status', '==', 'pending')));
+                    pendingWithdraws = pendingWithdrawsSnapshot.size;
+                } catch (error) {
+                    console.log('No withdrawRequests collection yet:', error.message);
+                }
+                
+                // Update dashboard
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('totalMatches').textContent = totalMatches;
+                document.getElementById('totalAddedBalance').textContent = `₹${totalAddedBalance.toLocaleString()}`;
+                document.getElementById('totalWinningBalance').textContent = `₹${totalWinningBalance.toLocaleString()}`;
+                document.getElementById('pendingRequests').textContent = pendingRequests;
+                document.getElementById('pendingWithdraws').textContent = pendingWithdraws;
+                
+                console.log('Dashboard data loaded successfully');
+            } catch (error) {
+                console.error('Error loading dashboard data:', error);
+                alert('Error loading dashboard data: ' + error.message);
+            }
+        }
+
+        async function loadMatches() {
+            try {
+                const matchesSnapshot = await getDocs(query(collection(db, 'matches'), orderBy('startTime', 'desc')));
+                const matchesTable = document.getElementById('matchesTable');
+                matchesTable.innerHTML = '';
+                
+                for (const doc of matchesSnapshot.docs) {
+                    const match = doc.data();
+                    const row = document.createElement('tr');
+                    
+                    // Handle timestamp conversion safely
+                    let startTimeString = 'N/A';
+                    try {
+                        if (match.startTime && match.startTime.toDate) {
+                            startTimeString = new Date(match.startTime.toDate()).toLocaleString();
+                        } else if (match.startTime) {
+                            startTimeString = new Date(match.startTime).toLocaleString();
+                        }
+                    } catch (error) {
+                        console.error('Error converting timestamp:', error);
+                        startTimeString = 'Invalid Date';
+                    }
+                    
+                    // Check if match is upcoming or completed
+                    let status = 'Completed';
+                    try {
+                        if (match.startTime && match.startTime.toDate) {
+                            status = match.startTime.toDate() > new Date() ? 'Upcoming' : 'Completed';
+                        } else if (match.startTime) {
+                            status = new Date(match.startTime) > new Date() ? 'Upcoming' : 'Completed';
+                        }
+                    } catch (error) {
+                        console.error('Error checking match status:', error);
+                        status = 'Unknown';
+                    }
+                    
+                    // Override status if match is live
+                    if (match.status === 'live') {
+                        status = 'LIVE';
+                    }
+                    
+                    // Get joined players count
+                    const joinedCount = match.joinedPlayers ? match.joinedPlayers.length : 0;
+                    
+                    // Create room details display
+                    const roomDetails = (match.roomId || match.roomPassword) ? `
+                        <div style="font-size: 0.85rem;">
+                            ${match.roomId ? `<div><strong>ID:</strong> ${match.roomId}</div>` : ''}
+                            ${match.roomPassword ? `<div><strong>Pass:</strong> ${match.roomPassword}</div>` : ''}
+                        </div>
+                    ` : '<span style="color: #666;">Not set</span>';
+                    
+                    row.innerHTML = `
+                        <td>${match.title || 'Untitled Match'}</td>
+                        <td>${match.game || 'Unknown Game'}</td>
+                        <td>${startTimeString}</td>
+                        <td>₹${match.entryFee || 0}</td>
+                        <td>${joinedCount}/${match.maxPlayers || 0}</td>
+                        <td>${roomDetails}</td>
+                        <td><span class="status-badge ${status === 'LIVE' ? 'status-live' : status === 'Upcoming' ? 'status-pending' : 'status-approved'}">${status}</span></td>
+                        <td>
+                            <button class="btn btn-secondary" onclick="editMatch('${doc.id}')">Edit</button>
+                            <button class="btn btn-danger" onclick="deleteMatch('${doc.id}')">Delete</button>
+                            ${joinedCount > 0 ? `<button class="btn btn-info" onclick="showMatchPlayers('${doc.id}')">Players (${joinedCount})</button>` : ''}
+                            ${match.status !== 'live' ? `
+                                <button class="btn btn-success" onclick="makeMatchLive('${doc.id}')">Make Live</button>
+                            ` : `
+                                <button class="btn btn-warning" onclick="endMatch('${doc.id}')">End Match</button>
+                            `}
+                        </td>
+                    `;
+                    matchesTable.appendChild(row);
+                }
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                const matchesTable = document.getElementById('matchesTable');
+                matchesTable.innerHTML = '<tr><td colspan="8">Error loading matches</td></tr>';
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const usersSnapshot = await getDocs(collection(db, 'users'));
+                const searchTerm = document.getElementById('userSearchInput')?.value?.toLowerCase() || '';
+                const usersTable = document.getElementById('usersTable');
+                const searchResults = document.getElementById('userSearchResults');
+                
+                usersTable.innerHTML = '';
+                let filteredUsers = [];
+                
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    
+                    // Filter users based on search term
+                    const matchesSearch = !searchTerm || 
+                        (user.name && user.name.toLowerCase().includes(searchTerm)) ||
+                        (user.email && user.email.toLowerCase().includes(searchTerm)) ||
+                        (user.phoneNumber && user.phoneNumber.toLowerCase().includes(searchTerm));
+                    
+                    if (matchesSearch) {
+                        filteredUsers.push({ id: doc.id, data: user });
+                    }
+                });
+                
+                if (filteredUsers.length === 0 && searchTerm) {
+                    usersTable.style.display = 'none';
+                    searchResults.style.display = 'block';
+                } else {
+                    usersTable.style.display = 'table-row-group';
+                    searchResults.style.display = 'none';
+                    
+                    filteredUsers.forEach(({ id, data: user }) => {
+                        const row = document.createElement('tr');
+                        
+                        const status = user.banned ? 'banned' : 'active';
+                        const statusClass = user.banned ? 'status-banned' : 'status-active';
+                        
+                        // Handle timestamp conversion safely
+                        let joinedDate = 'N/A';
+                        try {
+                            if (user.createdAt && user.createdAt.toDate) {
+                                joinedDate = user.createdAt.toDate().toLocaleDateString();
+                            } else if (user.createdAt) {
+                                joinedDate = new Date(user.createdAt).toLocaleDateString();
+                            }
+                        } catch (error) {
+                            console.error('Error converting timestamp:', error);
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${user.name || 'User'}</td>
+                            <td>${user.email || 'N/A'}</td>
+                            <td>${user.phoneNumber || 'N/A'}</td>
+                            <td>₹${user.addedBalance || 0}</td>
+                            <td>₹${user.winningBalance || 0}</td>
+                            <td><span class="status-badge ${statusClass}">${status}</span></td>
+                            <td>${joinedDate}</td>
+                            <td>
+                                <button class="btn btn-secondary" onclick="editUserBalance('${id}')">Edit Balance</button>
+                                <button class="btn ${user.banned ? 'btn-success' : 'btn-danger'}" onclick="banUser('${id}')">
+                                    ${user.banned ? 'Unban' : 'Ban'}
+                                </button>
+                                ${user.admin ? `
+                                    <button class="btn btn-danger" onclick="removeUserAdmin('${id}')">Remove Admin</button>
+                                ` : `
+                                    <button class="btn btn-primary" onclick="makeUserAdmin('${id}')">Make Admin</button>
+                                `}
+                                <button class="btn btn-info" onclick="sendNotification('${id}')">Send Notification</button>
+                            </td>
+                        `;
+                        
+                        usersTable.appendChild(row);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+            }
+        }
+
+        function clearUserSearch() {
+            const searchInput = document.getElementById('userSearchInput');
+            if (searchInput) {
+                searchInput.value = '';
+                loadUsers();
+            }
+        }
+
+        async function sendNotification(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    alert('User not found!');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const title = prompt(`Enter notification title for ${userData.name}:`);
+                if (!title) return;
+
+                const message = prompt(`Enter notification message for ${userData.name}:`);
+                if (!message) return;
+
+                await addDoc(collection(db, 'notifications'), {
+                    userId: userId,
+                    title: title,
+                    message: message,
+                    timestamp: new Date(),
+                    read: false
+                });
+
+                alert('Notification sent successfully!');
+            } catch (error) {
+                alert('Failed to send notification: ' + error.message);
+            }
+        }
+
+        async function loadTransactions() {
+            try {
+                console.log('Loading transactions...');
+                
+                // Load add money requests
+                const requestsTable = document.getElementById('addMoneyRequestsTable');
+                requestsTable.innerHTML = '';
+                
+                try {
+                    const requestsSnapshot = await getDocs(query(collection(db, 'addMoneyRequests'), orderBy('timestamp', 'desc')));
+                    
+                    requestsSnapshot.forEach(doc => {
+                        const request = doc.data();
+                        const row = document.createElement('tr');
+                        
+                        // Handle timestamp conversion safely
+                        let timestampString = 'N/A';
+                        try {
+                            if (request.timestamp && request.timestamp.toDate) {
+                                timestampString = new Date(request.timestamp.toDate()).toLocaleString();
+                            } else if (request.timestamp) {
+                                timestampString = new Date(request.timestamp).toLocaleString();
+                            }
+                        } catch (error) {
+                            console.error('Error converting timestamp:', error);
+                            timestampString = 'Invalid Date';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${request.userName || 'User'}</td>
+                            <td>₹${request.amount}</td>
+                            <td>${request.upiId || 'N/A'}</td>
+                            <td>${request.utrNumber || 'N/A'}</td>
+                            <td><span class="status-badge status-${request.status}">${request.status}</span></td>
+                            <td>${timestampString}</td>
+                            <td>
+                                ${request.status === 'pending' ? `
+                                    <button class="btn btn-success" onclick="approveRequest('${doc.id}')">Approve</button>
+                                    <button class="btn btn-danger" onclick="rejectRequest('${doc.id}')">Reject</button>
+                                ` : ''}
+                            </td>
+                        `;
+                        
+                        requestsTable.appendChild(row);
+                    });
+                } catch (error) {
+                    console.log('No addMoneyRequests collection yet:', error.message);
+                    requestsTable.innerHTML = '<tr><td colspan="7">No add money requests found</td></tr>';
+                }
+
+                // Load withdraw requests
+                const withdrawRequestsTable = document.getElementById('withdrawRequestsTable');
+                withdrawRequestsTable.innerHTML = '';
+                
+                try {
+                    const withdrawRequestsSnapshot = await getDocs(query(collection(db, 'withdrawRequests'), orderBy('timestamp', 'desc')));
+                    
+                    withdrawRequestsSnapshot.forEach(doc => {
+                        const request = doc.data();
+                        const row = document.createElement('tr');
+                        
+                        // Handle timestamp conversion safely
+                        let timestampString = 'N/A';
+                        try {
+                            if (request.timestamp && request.timestamp.toDate) {
+                                timestampString = new Date(request.timestamp.toDate()).toLocaleString();
+                            } else if (request.timestamp) {
+                                timestampString = new Date(request.timestamp).toLocaleString();
+                            }
+                        } catch (error) {
+                            console.error('Error converting timestamp:', error);
+                            timestampString = 'Invalid Date';
+                        }
+                        
+                        row.innerHTML = `
+                            <td>${request.userName || 'User'}</td>
+                            <td>₹${request.amount}</td>
+                            <td>${request.upiId || 'N/A'}</td>
+                            <td><span class="status-badge status-${request.status}">${request.status}</span></td>
+                            <td>${timestampString}</td>
+                            <td>
+                                ${request.status === 'pending' ? `
+                                    <button class="btn btn-success" onclick="approveWithdraw('${doc.id}')">Approve</button>
+                                    <button class="btn btn-danger" onclick="rejectWithdraw('${doc.id}')">Reject</button>
+                                ` : ''}
+                            </td>
+                        `;
+                        
+                        withdrawRequestsTable.appendChild(row);
+                    });
+                } catch (error) {
+                    console.log('No withdrawRequests collection yet:', error.message);
+                    withdrawRequestsTable.innerHTML = '<tr><td colspan="6">No withdraw requests found</td></tr>';
+                }
+                
+                console.log('Transactions loaded successfully');
+                
+                // Also load transaction history
+                await loadTransactionHistory();
+                
+            } catch (error) {
+                console.error('Error loading transactions:', error);
+                alert('Error loading transactions: ' + error.message);
+            }
+        }
+
+        async function approveWithdraw(requestId) {
+            try {
+                const requestDoc = await getDoc(doc(db, 'withdrawRequests', requestId));
+                const request = requestDoc.data();
+                
+                // Update request status
+                await updateDoc(doc(db, 'withdrawRequests', requestId), {
+                    status: 'approved'
+                });
+                
+                // Deduct from user's winning balance
+                const userDoc = await getDoc(doc(db, 'users', request.userId));
+                const userData = userDoc.data();
+                
+                if (userData.winningBalance < request.amount) {
+                    alert('User does not have enough winning balance!');
+                    return;
+                }
+                
+                await updateDoc(doc(db, 'users', request.userId), {
+                    winningBalance: userData.winningBalance - request.amount
+                });
+                
+                // Add transaction record
+                await addDoc(collection(db, 'transactions'), {
+                    userId: request.userId,
+                    type: 'withdraw',
+                    amount: -request.amount,
+                    description: 'Withdrawal approved',
+                    timestamp: new Date()
+                });
+                
+                alert('Withdraw request approved successfully!');
+                loadTransactions();
+                loadDashboardData();
+            } catch (error) {
+                alert('Failed to approve withdraw request: ' + error.message);
+            }
+        }
+
+        async function rejectWithdraw(requestId) {
+            try {
+                await updateDoc(doc(db, 'withdrawRequests', requestId), {
+                    status: 'rejected'
+                });
+                
+                alert('Withdraw request rejected successfully!');
+                loadTransactions();
+            } catch (error) {
+                alert('Failed to reject withdraw request: ' + error.message);
+            }
+        }
+
+        async function loadBanners() {
+            try {
+                const bannersSnapshot = await getDocs(query(collection(db, 'banners'), orderBy('order', 'asc')));
+                const bannersList = document.getElementById('bannersList');
+                bannersList.innerHTML = '';
+                
+                bannersSnapshot.forEach(doc => {
+                    const banner = doc.data();
+                    const bannerCard = document.createElement('div');
+                    bannerCard.className = 'card';
+                    bannerCard.style.marginBottom = '1rem';
+                    bannerCard.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <h4>Banner ${banner.order}</h4>
+                                <img src="${banner.imageURL}" alt="Banner" style="max-width: 200px; height: 100px; object-fit: cover; border-radius: 8px;">
+                            </div>
+                            <button class="btn btn-danger" onclick="deleteBanner('${doc.id}')">Delete</button>
+                        </div>
+                    `;
+                    bannersList.appendChild(bannerCard);
+                });
+            } catch (error) {
+                console.error('Error loading banners:', error);
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const usersSnapshot = await getDocs(query(collection(db, 'users'), orderBy('winningBalance', 'desc'), limit(50)));
+                const leaderboardTable = document.getElementById('leaderboardTable');
+                leaderboardTable.innerHTML = '';
+                
+                let rank = 1;
+                let topPlayerName = 'No players yet';
+                let topPlayerBalance = 0;
+                
+                usersSnapshot.forEach(doc => {
+                    const user = doc.data();
+                    const row = document.createElement('tr');
+                    
+                    // Set top player info
+                    if (rank === 1) {
+                        topPlayerName = user.name || 'Unknown Player';
+                        topPlayerBalance = user.winningBalance || 0;
+                    }
+                    
+                    row.innerHTML = `
+                        <td><strong>#${rank}</strong></td>
+                        <td>${user.name || 'User'}</td>
+                        <td>${user.email || 'No email'}</td>
+                        <td><strong>₹${user.winningBalance || 0}</strong></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="awardPrize('${doc.id}')">Award Prize</button>
+                            <button class="btn btn-secondary" onclick="testPrizeAward('${doc.id}')">Test</button>
+                        </td>
+                    `;
+                    
+                    leaderboardTable.appendChild(row);
+                    rank++;
+                });
+                
+                // Update stats
+                document.getElementById('topPlayerName').textContent = topPlayerName;
+                document.getElementById('topPlayerBalance').textContent = `₹${topPlayerBalance}`;
+                document.getElementById('totalPlayers').textContent = usersSnapshot.size;
+                
+                // Load matches for match leaderboard
+                await loadMatchesForLeaderboard();
+                
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+            }
+        }
+
+        async function loadMatchesForLeaderboard() {
+            try {
+                const matchesSnapshot = await getDocs(collection(db, 'matches'));
+                const matchSelector = document.getElementById('matchSelector');
+                matchSelector.innerHTML = '<option value="">Select a match...</option>';
+                
+                matchesSnapshot.forEach(doc => {
+                    const match = doc.data();
+                    if (match.status === 'completed' || match.status === 'ended') {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${match.title} (${match.game})`;
+                        matchSelector.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading matches for leaderboard:', error);
+            }
+        }
+
+        async function loadMatchLeaderboard() {
+            const matchId = document.getElementById('matchSelector').value;
+            if (!matchId) {
+                document.getElementById('matchLeaderboardTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Select a match to view winners</td></tr>';
+                return;
+            }
+            
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    document.getElementById('matchLeaderboardTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Match not found</td></tr>';
+                    return;
+                }
+                
+                const match = matchDoc.data();
+                const joinedPlayers = match.joinedPlayers || [];
+                const playerGameNames = match.playerGameNames || {};
+                
+                if (joinedPlayers.length === 0) {
+                    document.getElementById('matchLeaderboardTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">No players joined this match</td></tr>';
+                    return;
+                }
+                
+                // Get player details and sort by winning balance (simulating match results)
+                const playersDetails = [];
+                for (const playerId of joinedPlayers) {
+                    try {
+                        const playerDoc = await getDoc(doc(db, 'users', playerId));
+                        if (playerDoc.exists()) {
+                            const playerData = playerDoc.data();
+                            playersDetails.push({
+                                id: playerId,
+                                name: playerData.name || 'Unknown',
+                                email: playerData.email || 'No email',
+                                gameName: playerGameNames[playerId] || 'Not provided',
+                                winningBalance: playerData.winningBalance || 0
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error fetching player details:', error);
+                    }
+                }
+                
+                // Sort by winning balance (higher balance = better performance)
+                playersDetails.sort((a, b) => b.winningBalance - a.winningBalance);
+                
+                const matchLeaderboardTable = document.getElementById('matchLeaderboardTable');
+                matchLeaderboardTable.innerHTML = '';
+                
+                playersDetails.forEach((player, index) => {
+                    const rank = index + 1;
+                    const row = document.createElement('tr');
+                    
+                    row.innerHTML = `
+                        <td><strong>#${rank}</strong></td>
+                        <td>${player.name}</td>
+                        <td><span style="color: #28a745; font-weight: 600;">${player.gameName}</span></td>
+                        <td>${player.email}</td>
+                        <td><strong>₹${player.winningBalance}</strong></td>
+                        <td>
+                            <button class="btn btn-primary" onclick="awardPrize('${player.id}')">Award Prize</button>
+                            <button class="btn btn-info" onclick="viewPlayerDetails('${player.id}')">Details</button>
+                        </td>
+                    `;
+                    
+                    matchLeaderboardTable.appendChild(row);
+                });
+                
+            } catch (error) {
+                console.error('Error loading match leaderboard:', error);
+                document.getElementById('matchLeaderboardTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Error loading match results</td></tr>';
+            }
+        }
+
+        function switchLeaderboardTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.leaderboard-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.leaderboard-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'global') {
+                document.getElementById('globalLeaderboard').classList.add('active');
+            } else if (tab === 'matches') {
+                document.getElementById('matchLeaderboard').classList.add('active');
+            }
+        }
+
+        function refreshLeaderboard() {
+            const activeTab = document.querySelector('.leaderboard-tab.active');
+            if (activeTab.textContent === 'Global Rankings') {
+                loadLeaderboard();
+            } else {
+                loadMatchLeaderboard();
+            }
+        }
+
+        async function viewPlayerDetails(playerId) {
+            try {
+                const playerDoc = await getDoc(doc(db, 'users', playerId));
+                if (!playerDoc.exists()) {
+                    alert('Player not found!');
+                    return;
+                }
+                
+                const playerData = playerDoc.data();
+                
+                const modalContent = `
+                    <div style="max-width: 500px; margin: 0 auto; padding: 1rem;">
+                        <h3 style="color: #667eea; margin-bottom: 1rem;">Player Details</h3>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p><strong>Name:</strong> ${playerData.name || 'Not provided'}</p>
+                            <p><strong>Email:</strong> ${playerData.email || 'Not provided'}</p>
+                            <p><strong>Phone:</strong> ${playerData.phoneNumber || 'Not provided'}</p>
+                            <p><strong>Added Balance:</strong> ₹${playerData.addedBalance || 0}</p>
+                            <p><strong>Winning Balance:</strong> ₹${playerData.winningBalance || 0}</p>
+                            <p><strong>Status:</strong> ${playerData.banned ? 'Banned' : 'Active'}</p>
+                            <p><strong>Admin:</strong> ${playerData.admin ? 'Yes' : 'No'}</p>
+                            <p><strong>Joined:</strong> ${playerData.createdAt ? playerData.createdAt.toDate().toLocaleDateString() : 'Unknown'}</p>
+                        </div>
+                    </div>
+                `;
+                
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                `;
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 1rem; max-width: 90%; max-height: 90%; overflow-y: auto;">
+                        ${modalContent}
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <button onclick="this.parentElement.parentElement.remove()" style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+            } catch (error) {
+                console.error('Error viewing player details:', error);
+                alert('Failed to load player details: ' + error.message);
+            }
+        }
+
+        // Form handlers
+        document.getElementById('createMatchForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const matchData = {
+                title: document.getElementById('matchTitle').value,
+                game: document.getElementById('matchGame').value,
+                startTime: new Date(document.getElementById('matchStartTime').value),
+                entryFee: parseInt(document.getElementById('matchEntryFee').value),
+                maxPlayers: parseInt(document.getElementById('matchMaxPlayers').value),
+                bannerUrl: document.getElementById('matchBannerUrl').value,
+                roomId: document.getElementById('matchRoomId').value,
+                roomPassword: document.getElementById('matchRoomPassword').value,
+                description: document.getElementById('matchDescription').value,
+                joinedPlayers: [],
+                status: 'upcoming',
+                createdAt: new Date()
+            };
+
+            try {
+                await addDoc(collection(db, 'matches'), matchData);
+                alert('Match created successfully!');
+                this.reset();
+                loadMatches();
+            } catch (error) {
+                alert('Failed to create match: ' + error.message);
+            }
+        });
+
+        document.getElementById('createBannerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const bannerData = {
+                imageURL: document.getElementById('bannerImageUrl').value,
+                order: parseInt(document.getElementById('bannerOrder').value),
+                createdAt: new Date()
+            };
+
+            try {
+                await addDoc(collection(db, 'banners'), bannerData);
+                alert('Banner added successfully!');
+                this.reset();
+                loadBanners();
+            } catch (error) {
+                alert('Failed to add banner: ' + error.message);
+            }
+        });
+
+        // Action functions
+        async function approveRequest(requestId) {
+            try {
+                const requestDoc = await getDoc(doc(db, 'addMoneyRequests', requestId));
+                const request = requestDoc.data();
+                
+                // Update request status
+                await updateDoc(doc(db, 'addMoneyRequests', requestId), {
+                    status: 'approved'
+                });
+                
+                // Add money to user's added balance
+                const userDoc = await getDoc(doc(db, 'users', request.userId));
+                const userData = userDoc.data();
+                
+                await updateDoc(doc(db, 'users', request.userId), {
+                    addedBalance: (userData.addedBalance || 0) + request.amount
+                });
+                
+                // Add transaction record
+                await addDoc(collection(db, 'transactions'), {
+                    userId: request.userId,
+                    type: 'add_money',
+                    amount: request.amount,
+                    description: 'Add money request approved',
+                    timestamp: new Date()
+                });
+                
+                alert('Request approved successfully!');
+                loadTransactions();
+                loadDashboardData();
+            } catch (error) {
+                alert('Failed to approve request: ' + error.message);
+            }
+        }
+
+        async function rejectRequest(requestId) {
+            try {
+                await updateDoc(doc(db, 'addMoneyRequests', requestId), {
+                    status: 'rejected'
+                });
+                
+                alert('Request rejected successfully!');
+                loadTransactions();
+            } catch (error) {
+                alert('Failed to reject request: ' + error.message);
+            }
+        }
+
+        async function editMatch(matchId) {
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    alert('Match not found!');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                
+                // Create a comprehensive form for editing
+                const newTitle = prompt('Enter new title:', match.title);
+                if (newTitle === null) return;
+                
+                const newGame = prompt('Enter new game:', match.game);
+                if (newGame === null) return;
+                
+                const newEntryFee = prompt('Enter new entry fee:', match.entryFee);
+                if (newEntryFee === null) return;
+                
+                const newMaxPlayers = prompt('Enter new max players:', match.maxPlayers);
+                if (newMaxPlayers === null) return;
+                
+                const newRoomId = prompt('Enter new room ID:', match.roomId || '');
+                if (newRoomId === null) return;
+                
+                const newRoomPassword = prompt('Enter new room password:', match.roomPassword || '');
+                if (newRoomPassword === null) return;
+                
+                const newDescription = prompt('Enter new description:', match.description || '');
+                if (newDescription === null) return;
+
+                const entryFee = parseInt(newEntryFee);
+                const maxPlayers = parseInt(newMaxPlayers);
+
+                if (isNaN(entryFee) || isNaN(maxPlayers) || entryFee < 0 || maxPlayers <= 0) {
+                    alert('Please enter valid numbers for entry fee and max players');
+                    return;
+                }
+
+                // Create update object with all fields
+                const updateData = {
+                    title: newTitle,
+                    game: newGame,
+                    entryFee: entryFee,
+                    maxPlayers: maxPlayers,
+                    roomId: newRoomId,
+                    roomPassword: newRoomPassword,
+                    description: newDescription
+                };
+
+                await updateDoc(doc(db, 'matches', matchId), updateData);
+
+                alert('Match updated successfully!');
+                loadMatches();
+            } catch (error) {
+                alert('Failed to update match: ' + error.message);
+            }
+        }
+
+        async function deleteMatch(matchId) {
+            if (confirm('Are you sure you want to delete this match?')) {
+                try {
+                    await deleteDoc(doc(db, 'matches', matchId));
+                    alert('Match deleted successfully!');
+                    loadMatches();
+                } catch (error) {
+                    alert('Failed to delete match: ' + error.message);
+                }
+            }
+        }
+
+        async function deleteBanner(bannerId) {
+            if (confirm('Are you sure you want to delete this banner?')) {
+                try {
+                    await deleteDoc(doc(db, 'banners', bannerId));
+                    alert('Banner deleted successfully!');
+                    loadBanners();
+                } catch (error) {
+                    alert('Failed to delete banner: ' + error.message);
+                }
+            }
+        }
+
+        async function editUserBalance(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    alert('User not found!');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                
+                // Create a modal or prompt for editing balances
+                const addedBalance = prompt(`Enter new added balance for ${userData.name} (current: ₹${userData.addedBalance || 0}):`);
+                if (addedBalance === null) return;
+                
+                const winningBalance = prompt(`Enter new winning balance for ${userData.name} (current: ₹${userData.winningBalance || 0}):`);
+                if (winningBalance === null) return;
+
+                const newAddedBalance = parseInt(addedBalance);
+                const newWinningBalance = parseInt(winningBalance);
+
+                if (isNaN(newAddedBalance) || isNaN(newWinningBalance)) {
+                    alert('Please enter valid numbers');
+                    return;
+                }
+
+                await updateDoc(doc(db, 'users', userId), {
+                    addedBalance: newAddedBalance,
+                    winningBalance: newWinningBalance
+                });
+
+                alert('Balance updated successfully!');
+                loadUsers();
+            } catch (error) {
+                alert('Failed to update balance: ' + error.message);
+            }
+        }
+
+        async function awardPrize(userId) {
+            const prizeAmount = prompt('Enter prize amount:');
+            if (prizeAmount === null) {
+                return; // User cancelled
+            }
+            
+            const amount = parseInt(prizeAmount);
+            if (isNaN(amount) || amount <= 0) {
+                alert('Please enter a valid positive number for the prize amount.');
+                return;
+            }
+
+            try {
+                console.log('Awarding prize to user:', userId, 'Amount:', amount);
+                
+                // Get current user data
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    alert('User not found!');
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                const newWinningBalance = (userData.winningBalance || 0) + amount;
+                
+                console.log('Current winning balance:', userData.winningBalance || 0, 'New winning balance:', newWinningBalance);
+                
+                // Update user winning balance
+                await updateDoc(doc(db, 'users', userId), {
+                    winningBalance: newWinningBalance
+                });
+                
+                console.log('User winning balance updated successfully');
+                
+                // Add transaction record with proper timestamp
+                const now = new Date();
+                const transactionData = {
+                    userId: userId,
+                    type: 'prize_award',
+                    amount: amount,
+                    description: 'Prize awarded by admin',
+                    timestamp: now
+                };
+                
+                console.log('Creating transaction:', transactionData);
+                const transactionRef = await addDoc(collection(db, 'transactions'), transactionData);
+                console.log('Transaction created with ID:', transactionRef.id);
+                
+                alert(`Prize of ₹${amount} awarded successfully to ${userData.name}!`);
+                loadLeaderboard();
+                
+            } catch (error) {
+                console.error('Error awarding prize:', error);
+                
+                // More specific error messages
+                if (error.code === 'permission-denied') {
+                    alert('Permission denied. Please check if you have admin privileges and Firestore rules are updated.');
+                } else if (error.code === 'not-found') {
+                    alert('User not found. Please try again.');
+                } else {
+                    alert('Failed to award prize: ' + error.message);
+                }
+            }
+        }
+
+        // Function to test admin access (for debugging)
+        async function testAdminAccess() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert('Please login first');
+                return;
+            }
+            
+            console.log('=== ADMIN ACCESS TEST ===');
+            console.log('User UID:', user.uid);
+            console.log('User Email:', user.email);
+            console.log('Expected UID:', 'lwrLF01gp1hcEwF0rZr4vu6oeju2');
+            console.log('Expected Email:', 'rahulkashyap10091009@gmail.com');
+            
+            const isAdmin = await isAdminUser(user);
+            console.log('Is Admin:', isAdmin);
+            
+            if (isAdmin) {
+                alert('✅ You have admin access!');
+            } else {
+                alert('❌ You do not have admin access. Check console for details.');
+            }
+        }
+
+        // Function to make current user admin (for first-time setup)
+        async function makeCurrentUserAdmin() {
+            try {
+                const user = auth.currentUser;
+                if (!user) {
+                    alert('Please login first');
+                    return;
+                }
+
+                await updateDoc(doc(db, 'users', user.uid), {
+                    admin: true
+                });
+                
+                alert('You have been made admin! Please refresh the page.');
+                console.log('Admin status updated for user:', user.email);
+            } catch (error) {
+                alert('Failed to make admin: ' + error.message);
+                console.error('Error:', error);
+            }
+        }
+
+        // Function to ensure user document exists
+        async function ensureUserDocument(user) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', user.uid));
+                if (!userDoc.exists()) {
+                    // Create user document if it doesn't exist
+                    await setDoc(doc(db, 'users', user.uid), {
+                        name: user.displayName || 'User',
+                        email: user.email,
+                        addedBalance: 1000, // Starting added balance
+                        winningBalance: 0, // Starting winning balance
+                        status: 'active',
+                        banned: false,
+                        referralCode: generateReferralCode(),
+                        referralEarnings: 0,
+                        createdAt: new Date(),
+                        photoURL: user.photoURL || '',
+                        phoneNumber: user.phoneNumber || '',
+                        admin: false
+                    });
+                    console.log('Created user document for:', user.email);
+                }
+            } catch (error) {
+                console.error('Error ensuring user document:', error);
+            }
+        }
+
+        // Helper function to generate referral code
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Function to test prize awarding (for debugging)
+        async function testPrizeAward(userId) {
+            try {
+                console.log('=== TESTING PRIZE AWARD ===');
+                console.log('User ID:', userId);
+                
+                // Test 1: Check if user exists
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    console.log('❌ User not found');
+                    return;
+                }
+                
+                const userData = userDoc.data();
+                console.log('✅ User found:', userData.name, 'Current balance:', userData.winningBalance);
+                
+                // Test 2: Check if we can update user balance
+                const testAmount = 1;
+                const newBalance = userData.winningBalance + testAmount;
+                
+                console.log('Testing balance update...');
+                await updateDoc(doc(db, 'users', userId), {
+                    winningBalance: newBalance
+                });
+                console.log('✅ Balance update successful');
+                
+                // Test 3: Check if we can create transaction
+                const transactionData = {
+                    userId: userId,
+                    type: 'test_prize',
+                    amount: testAmount,
+                    description: 'Test prize award',
+                    timestamp: new Date()
+                };
+                
+                console.log('Testing transaction creation...');
+                const transactionRef = await addDoc(collection(db, 'transactions'), transactionData);
+                console.log('✅ Transaction creation successful, ID:', transactionRef.id);
+                
+                // Revert the test changes
+                await updateDoc(doc(db, 'users', userId), {
+                    winningBalance: userData.winningBalance
+                });
+                console.log('✅ Test changes reverted');
+                
+                alert('✅ All tests passed! Prize awarding should work.');
+                
+            } catch (error) {
+                console.error('❌ Test failed:', error);
+                alert('❌ Test failed: ' + error.message);
+            }
+        }
+
+        async function banUser(userId) {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', userId));
+                if (!userDoc.exists()) {
+                    alert('User not found!');
+                    return;
+                }
+
+                const userData = userDoc.data();
+                const newBannedStatus = !userData.banned;
+
+                await updateDoc(doc(db, 'users', userId), {
+                    banned: newBannedStatus
+                });
+                
+                alert(`User ${userData.name || 'User'} has been ${newBannedStatus ? 'banned' : 'unbanned'} successfully!`);
+                loadUsers();
+            } catch (error) {
+                console.error('Error banning/unbanning user:', error);
+                alert('Failed to ban/unban user: ' + error.message);
+            }
+        }
+
+        async function makeMatchLive(matchId) {
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    alert('Match not found!');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                if (match.status === 'live') {
+                    alert('Match is already live!');
+                    return;
+                }
+
+                await updateDoc(doc(db, 'matches', matchId), {
+                    status: 'live',
+                    startTime: new Date() // Set current time as start time for live matches
+                });
+                alert('Match made live successfully!');
+                loadMatches();
+            } catch (error) {
+                alert('Failed to make match live: ' + error.message);
+            }
+        }
+
+        async function endMatch(matchId) {
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    alert('Match not found!');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                if (match.status !== 'live') {
+                    alert('Match is not currently live!');
+                    return;
+                }
+
+                await updateDoc(doc(db, 'matches', matchId), {
+                    status: 'completed',
+                    endTime: new Date()
+                });
+                alert('Match ended successfully!');
+                loadMatches();
+            } catch (error) {
+                alert('Failed to end match: ' + error.message);
+            }
+        }
+
+        async function loadScannerSettings() {
+            try {
+                const scannerDoc = await getDoc(doc(db, 'scannerSettings', 'current'));
+                if (scannerDoc.exists()) {
+                    const settings = scannerDoc.data();
+                    document.getElementById('currentQrImageUrl').textContent = settings.qrCodeImageUrl || 'Not set';
+                    document.getElementById('currentQrCode').textContent = settings.qrCode || 'Not set';
+                    document.getElementById('currentUpiId').textContent = settings.upiId || 'Not set';
+                    document.getElementById('currentInstructions').textContent = settings.instructions || 'Not set';
+                } else {
+                    document.getElementById('currentQrImageUrl').textContent = 'Not set';
+                    document.getElementById('currentQrCode').textContent = 'Not set';
+                    document.getElementById('currentUpiId').textContent = 'Not set';
+                    document.getElementById('currentInstructions').textContent = 'Not set';
+                }
+            } catch (error) {
+                console.error('Error loading scanner settings:', error);
+                alert('Error loading scanner settings: ' + error.message);
+            }
+        }
+
+        document.getElementById('scannerForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const qrCodeImageUrl = document.getElementById('scannerQrImageUrl').value;
+            const qrCode = document.getElementById('scannerQrCode').value;
+            const upiId = document.getElementById('scannerUpiId').value;
+            const instructions = document.getElementById('scannerInstructions').value;
+
+            try {
+                await setDoc(doc(db, 'scannerSettings', 'current'), {
+                    qrCodeImageUrl: qrCodeImageUrl,
+                    qrCode: qrCode,
+                    upiId: upiId,
+                    instructions: instructions
+                });
+                alert('Scanner settings updated successfully!');
+                loadScannerSettings();
+            } catch (error) {
+                alert('Failed to update scanner settings: ' + error.message);
+            }
+        });
+
+        document.getElementById('referralForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const referrerBonus = parseInt(document.getElementById('referrerBonus').value);
+            const newUserBonus = parseInt(document.getElementById('newUserBonus').value);
+            const defaultSignupBonus = parseInt(document.getElementById('defaultSignupBonus').value);
+
+            // Validate inputs
+            if (isNaN(referrerBonus) || isNaN(newUserBonus) || isNaN(defaultSignupBonus)) {
+                alert('Please enter valid numbers for all bonus amounts');
+                return;
+            }
+
+            if (referrerBonus < 0 || newUserBonus < 0 || defaultSignupBonus < 0) {
+                alert('Bonus amounts cannot be negative');
+                return;
+            }
+
+            try {
+                await setDoc(doc(db, 'referralSettings', 'current'), {
+                    referrerBonus: referrerBonus,
+                    newUserBonus: newUserBonus,
+                    defaultSignupBonus: defaultSignupBonus,
+                    updatedAt: new Date()
+                });
+                alert('Referral settings updated successfully!');
+                loadReferralSettings(); // Reload to confirm
+            } catch (error) {
+                console.error('Error updating referral settings:', error);
+                alert('Failed to update referral settings: ' + error.message);
+            }
+        });
+
+        async function loadReferrals() {
+            try {
+                const referralsSnapshot = await getDocs(query(collection(db, 'referrals'), orderBy('timestamp', 'desc')));
+                const referralTable = document.getElementById('referralTable');
+                referralTable.innerHTML = '';
+                
+                if (referralsSnapshot.empty) {
+                    referralTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">No referrals found</td></tr>';
+                    return;
+                }
+                
+                referralsSnapshot.forEach(doc => {
+                    const referral = doc.data();
+                    const row = document.createElement('tr');
+                    
+                    let timestamp = 'N/A';
+                    try {
+                        if (referral.timestamp && referral.timestamp.toDate) {
+                            timestamp = referral.timestamp.toDate().toLocaleString();
+                        } else if (referral.timestamp) {
+                            timestamp = new Date(referral.timestamp).toLocaleString();
+                        }
+                    } catch (error) {
+                        console.error('Error converting timestamp:', error);
+                        timestamp = 'Invalid Date';
+                    }
+                    
+                    row.innerHTML = `
+                        <td>${referral.referrerName || 'Unknown'} (${referral.referrerEmail || 'No email'})</td>
+                        <td>${referral.referredUserName || 'Unknown'} (${referral.referredUserEmail || 'No email'})</td>
+                        <td>₹${referral.referrerBonus || 0}</td>
+                        <td>₹${referral.referredUserBonus || 0}</td>
+                        <td>${timestamp}</td>
+                        <td><span class="status-badge status-approved">${referral.status || 'completed'}</span></td>
+                    `;
+                    referralTable.appendChild(row);
+                });
+            } catch (error) {
+                console.error('Error loading referrals:', error);
+                const referralTable = document.getElementById('referralTable');
+                if (error.code === 'permission-denied') {
+                    referralTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Permission denied. Please check Firestore rules.</td></tr>';
+                } else {
+                    referralTable.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Error loading referrals: ' + error.message + '</td></tr>';
+                }
+            }
+        }
+
+        async function loadReferralSettings() {
+            try {
+                const settingsDoc = await getDoc(doc(db, 'referralSettings', 'current'));
+                if (settingsDoc.exists()) {
+                    const settings = settingsDoc.data();
+                    document.getElementById('referrerBonus').value = settings.referrerBonus || 500;
+                    document.getElementById('newUserBonus').value = settings.newUserBonus || 500;
+                    document.getElementById('defaultSignupBonus').value = settings.defaultSignupBonus || 1000;
+                } else {
+                    // Set default values if no settings exist
+                    document.getElementById('referrerBonus').value = 500;
+                    document.getElementById('newUserBonus').value = 500;
+                    document.getElementById('defaultSignupBonus').value = 1000;
+                    console.log('No referral settings found, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading referral settings:', error);
+                if (error.code === 'permission-denied') {
+                    console.error('Permission denied for referralSettings collection. Please check Firestore rules.');
+                    alert('Permission denied for referral settings. Please check Firestore rules.');
+                }
+                // Set default values on error
+                document.getElementById('referrerBonus').value = 500;
+                document.getElementById('newUserBonus').value = 500;
+                document.getElementById('defaultSignupBonus').value = 1000;
+            }
+        }
+
+        async function showMatchPlayers(matchId) {
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    alert('Match not found!');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                const joinedPlayers = match.joinedPlayers || [];
+                const playerGameNames = match.playerGameNames || {};
+
+                if (joinedPlayers.length === 0) {
+                    alert('No players have joined this match yet.');
+                    return;
+                }
+
+                // Get detailed player information
+                const playersDetails = [];
+                for (const playerId of joinedPlayers) {
+                    try {
+                        const playerDoc = await getDoc(doc(db, 'users', playerId));
+                        if (playerDoc.exists()) {
+                            const playerData = playerDoc.data();
+                            const gameName = playerGameNames[playerId] || 'Not provided';
+                            playersDetails.push({
+                                id: playerId,
+                                name: playerData.name || 'Unknown',
+                                email: playerData.email || 'No email',
+                                gameName: gameName,
+                                phoneNumber: playerData.phoneNumber || 'N/A'
+                            });
+                        } else {
+                            playersDetails.push({
+                                id: playerId,
+                                name: 'Unknown Player',
+                                email: 'No email',
+                                gameName: playerGameNames[playerId] || 'Not provided',
+                                phoneNumber: 'N/A'
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error fetching player details:', error);
+                        playersDetails.push({
+                            id: playerId,
+                            name: 'Error loading player',
+                            email: 'Error',
+                            gameName: playerGameNames[playerId] || 'Not provided',
+                            phoneNumber: 'N/A'
+                        });
+                    }
+                }
+
+                // Create modal content
+                let modalContent = `
+                    <div style="max-width: 800px; margin: 0 auto; padding: 1rem;">
+                        <h2 style="color: #667eea; margin-bottom: 1rem;">${match.title} - Joined Players</h2>
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <p><strong>Game:</strong> ${match.game}</p>
+                            <p><strong>Entry Fee:</strong> ₹${match.entryFee}</p>
+                            <p><strong>Players:</strong> ${joinedPlayers.length}/${match.maxPlayers}</p>
+                            <p><strong>Status:</strong> ${match.status || 'upcoming'}</p>
+                        </div>
+                        <div style="max-height: 400px; overflow-y: auto;">
+                            <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden;">
+                                <thead style="background: #667eea; color: white;">
+                                    <tr>
+                                        <th style="padding: 0.75rem; text-align: left;">#</th>
+                                        <th style="padding: 0.75rem; text-align: left;">User Name</th>
+                                        <th style="padding: 0.75rem; text-align: left;">Email</th>
+                                        <th style="padding: 0.75rem; text-align: left;">Game Name</th>
+                                        <th style="padding: 0.75rem; text-align: left;">Phone</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                `;
+
+                playersDetails.forEach((player, index) => {
+                    modalContent += `
+                        <tr style="border-bottom: 1px solid #f0f0f0;">
+                            <td style="padding: 0.75rem; font-weight: 600; color: #667eea;">${index + 1}</td>
+                            <td style="padding: 0.75rem;">${player.name}</td>
+                            <td style="padding: 0.75rem; font-family: monospace; font-size: 0.9rem;">${player.email}</td>
+                            <td style="padding: 0.75rem; font-weight: 600; color: #28a745;">${player.gameName}</td>
+                            <td style="padding: 0.75rem;">${player.phoneNumber}</td>
+                        </tr>
+                    `;
+                });
+
+                modalContent += `
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+
+                // Create modal
+                const modal = document.createElement('div');
+                modal.id = 'matchPlayersModal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                `;
+                
+                // Add click event to close modal when clicking outside
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+                
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 1rem; max-width: 90%; max-height: 90%; overflow-y: auto;">
+                        ${modalContent}
+                        <div style="text-align: center; margin-top: 1rem;">
+                            <button onclick="closeModal()" style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+                
+                // Function to close modal
+                function closeModal() {
+                    const modalElement = document.getElementById('matchPlayersModal');
+                    if (modalElement) {
+                        modalElement.remove();
+                    }
+                }
+                
+                // Make closeModal function globally available
+                window.closeModal = closeModal;
+
+            } catch (error) {
+                console.error('Error showing match players:', error);
+                alert('Failed to load player details: ' + error.message);
+            }
+        }
+
+        // Notifications Management Functions
+        async function loadNotifications() {
+            try {
+                const notificationsSnapshot = await getDocs(collection(db, 'notifications'));
+                const notificationsTable = document.getElementById('notificationsTable');
+                notificationsTable.innerHTML = '';
+                
+                let totalNotifications = 0;
+                let readNotifications = 0;
+                let unreadNotifications = 0;
+                
+                const notifications = [];
+                
+                // Get all notifications and user details
+                for (const doc of notificationsSnapshot.docs) {
+                    const notification = doc.data();
+                    notifications.push({
+                        id: doc.id,
+                        ...notification
+                    });
+                    
+                    totalNotifications++;
+                    if (notification.read) {
+                        readNotifications++;
+                    } else {
+                        unreadNotifications++;
+                    }
+                }
+                
+                // Sort by timestamp (newest first)
+                notifications.sort((a, b) => {
+                    const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp) || new Date(0);
+                    const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp) || new Date(0);
+                    return timeB - timeA;
+                });
+                
+                // Display notifications
+                for (const notification of notifications) {
+                    try {
+                        // Get user details
+                        let userName = 'Unknown User';
+                        let userEmail = 'No email';
+                        
+                        if (notification.userId) {
+                            const userDoc = await getDoc(doc(db, 'users', notification.userId));
+                            if (userDoc.exists()) {
+                                const userData = userDoc.data();
+                                userName = userData.name || 'Unknown User';
+                                userEmail = userData.email || 'No email';
+                            }
+                        }
+                        
+                        const row = document.createElement('tr');
+                        
+                        // Handle timestamp conversion safely
+                        let timestampString = 'Unknown';
+                        try {
+                            if (notification.timestamp?.toDate) {
+                                timestampString = notification.timestamp.toDate().toLocaleString();
+                            } else if (notification.timestamp) {
+                                timestampString = new Date(notification.timestamp).toLocaleString();
+                            }
+                        } catch (error) {
+                            console.error('Error converting timestamp:', error);
+                        }
+                        
+                        row.innerHTML = `
+                            <td>
+                                <div>
+                                    <div style="font-weight: 600;">${userName}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${userEmail}</div>
+                                </div>
+                            </td>
+                            <td>${notification.title || 'No title'}</td>
+                            <td>${notification.message || 'No message'}</td>
+                            <td>
+                                <span class="notification-status ${notification.read ? 'read' : 'unread'}">
+                                    ${notification.read ? 'Read' : 'Unread'}
+                                </span>
+                            </td>
+                            <td>${timestampString}</td>
+                            <td>
+                                <button class="btn btn-danger btn-small" onclick="deleteNotification('${notification.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        
+                        notificationsTable.appendChild(row);
+                        
+                    } catch (error) {
+                        console.error('Error processing notification:', error);
+                    }
+                }
+                
+                // Update stats
+                document.getElementById('totalNotifications').textContent = totalNotifications;
+                document.getElementById('readNotifications').textContent = readNotifications;
+                document.getElementById('unreadNotifications').textContent = unreadNotifications;
+                
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                document.getElementById('notificationsTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Error loading notifications</td></tr>';
+            }
+        }
+
+        async function deleteNotification(notificationId) {
+            if (!confirm('Are you sure you want to delete this notification? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, 'notifications', notificationId));
+                alert('Notification deleted successfully!');
+                loadNotifications();
+            } catch (error) {
+                console.error('Error deleting notification:', error);
+                alert('Failed to delete notification: ' + error.message);
+            }
+        }
+
+        async function deleteAllNotifications() {
+            if (!confirm('⚠️ WARNING: This will delete ALL notifications from the database!\n\nThis action cannot be undone. Are you sure you want to continue?')) {
+                return;
+            }
+            
+            try {
+                const notificationsSnapshot = await getDocs(collection(db, 'notifications'));
+                const deletePromises = [];
+                
+                notificationsSnapshot.forEach(doc => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                
+                await Promise.all(deletePromises);
+                
+                alert(`Successfully deleted ${notificationsSnapshot.size} notifications!`);
+                loadNotifications();
+                
+            } catch (error) {
+                console.error('Error deleting all notifications:', error);
+                alert('Failed to delete all notifications: ' + error.message);
+            }
+        }
+
+        // Transaction History Management Functions
+        async function loadTransactionHistory() {
+            try {
+                const transactionsSnapshot = await getDocs(collection(db, 'transactions'));
+                const transactionHistoryTable = document.getElementById('transactionHistoryTable');
+                transactionHistoryTable.innerHTML = '';
+                
+                let totalTransactions = 0;
+                let totalAmount = 0;
+                let oldestTransaction = null;
+                
+                const transactions = [];
+                
+                // Get all transactions and user details
+                for (const doc of transactionsSnapshot.docs) {
+                    const transaction = doc.data();
+                    transactions.push({
+                        id: doc.id,
+                        ...transaction
+                    });
+                    
+                    totalTransactions++;
+                    totalAmount += Math.abs(transaction.amount || 0);
+                    
+                    // Track oldest transaction
+                    const transactionDate = transaction.timestamp?.toDate?.() || new Date(transaction.timestamp) || new Date();
+                    if (!oldestTransaction || transactionDate < oldestTransaction) {
+                        oldestTransaction = transactionDate;
+                    }
+                }
+                
+                // Sort by timestamp (newest first)
+                transactions.sort((a, b) => {
+                    const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp) || new Date(0);
+                    const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp) || new Date(0);
+                    return timeB - timeA;
+                });
+                
+                // Display transactions (limit to 100 for performance)
+                const displayTransactions = transactions.slice(0, 100);
+                
+                for (const transaction of displayTransactions) {
+                    try {
+                        // Get user details
+                        let userName = 'Unknown User';
+                        let userEmail = 'No email';
+                        
+                        if (transaction.userId) {
+                            const userDoc = await getDoc(doc(db, 'users', transaction.userId));
+                            if (userDoc.exists()) {
+                                const userData = userDoc.data();
+                                userName = userData.name || 'Unknown User';
+                                userEmail = userData.email || 'No email';
+                            }
+                        }
+                        
+                        const row = document.createElement('tr');
+                        
+                        // Handle timestamp conversion safely
+                        let timestampString = 'Unknown';
+                        try {
+                            if (transaction.timestamp?.toDate) {
+                                timestampString = transaction.timestamp.toDate().toLocaleString();
+                            } else if (transaction.timestamp) {
+                                timestampString = new Date(transaction.timestamp).toLocaleString();
+                            }
+                        } catch (error) {
+                            console.error('Error converting timestamp:', error);
+                        }
+                        
+                        // Determine transaction type and styling
+                        const transactionType = transaction.type || 'other';
+                        const typeClass = `transaction-type ${transactionType}`;
+                        const typeDisplay = transactionType.replace('_', ' ').toUpperCase();
+                        
+                        const amount = transaction.amount || 0;
+                        const isPositive = amount >= 0;
+                        
+                        row.innerHTML = `
+                            <td>
+                                <div>
+                                    <div style="font-weight: 600;">${userName}</div>
+                                    <div style="font-size: 0.8rem; color: #666;">${userEmail}</div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="${typeClass}">${typeDisplay}</span>
+                            </td>
+                            <td>${transaction.description || 'No description'}</td>
+                            <td style="font-weight: 600; color: ${isPositive ? '#28a745' : '#dc3545'};">
+                                ${isPositive ? '+' : ''}₹${Math.abs(amount)}
+                            </td>
+                            <td>${timestampString}</td>
+                            <td>
+                                <button class="btn btn-danger btn-small" onclick="deleteTransaction('${transaction.id}')">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </td>
+                        `;
+                        
+                        transactionHistoryTable.appendChild(row);
+                        
+                    } catch (error) {
+                        console.error('Error processing transaction:', error);
+                    }
+                }
+                
+                // Update stats
+                document.getElementById('totalTransactions').textContent = totalTransactions;
+                document.getElementById('totalTransactionAmount').textContent = `₹${totalAmount.toLocaleString()}`;
+                document.getElementById('oldestTransaction').textContent = oldestTransaction ? oldestTransaction.toLocaleDateString() : 'N/A';
+                
+                // Show message if there are more transactions
+                if (transactions.length > 100) {
+                    const infoRow = document.createElement('tr');
+                    infoRow.innerHTML = `
+                        <td colspan="6" style="text-align: center; color: #666; padding: 1rem; background: #f8f9fa;">
+                            Showing 100 most recent transactions out of ${transactions.length} total transactions
+                        </td>
+                    `;
+                    transactionHistoryTable.appendChild(infoRow);
+                }
+                
+            } catch (error) {
+                console.error('Error loading transaction history:', error);
+                document.getElementById('transactionHistoryTable').innerHTML = '<tr><td colspan="6" style="text-align: center; color: #666; padding: 2rem;">Error loading transaction history</td></tr>';
+            }
+        }
+
+        async function deleteTransaction(transactionId) {
+            if (!confirm('Are you sure you want to delete this transaction? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                await deleteDoc(doc(db, 'transactions', transactionId));
+                alert('Transaction deleted successfully!');
+                loadTransactionHistory();
+            } catch (error) {
+                console.error('Error deleting transaction:', error);
+                alert('Failed to delete transaction: ' + error.message);
+            }
+        }
+
+        async function deleteAllTransactions() {
+            if (!confirm('⚠️ WARNING: This will delete ALL transactions from the database!\n\nThis action cannot be undone and will affect user transaction history. Are you sure you want to continue?')) {
+                return;
+            }
+            
+            try {
+                const transactionsSnapshot = await getDocs(collection(db, 'transactions'));
+                const deletePromises = [];
+                
+                transactionsSnapshot.forEach(doc => {
+                    deletePromises.push(deleteDoc(doc.ref));
+                });
+                
+                await Promise.all(deletePromises);
+                
+                alert(`Successfully deleted ${transactionsSnapshot.size} transactions!`);
+                loadTransactionHistory();
+                
+            } catch (error) {
+                console.error('Error deleting all transactions:', error);
+                alert('Failed to delete all transactions: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

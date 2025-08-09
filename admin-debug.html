@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Debug - Free Fire Tournament</title>
+    
+    <!-- Firebase SDK v9+ (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, addDoc, deleteDoc, onSnapshot, query, orderBy, limit, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // TODO: Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Make Firebase available globally
+        window.auth = auth;
+        window.db = db;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.onAuthStateChanged = onAuthStateChanged;
+        window.collection = collection;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.getDocs = getDocs;
+        window.updateDoc = updateDoc;
+        window.addDoc = addDoc;
+        window.deleteDoc = deleteDoc;
+        window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.limit = limit;
+        window.where = where;
+    </script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .success { background: #d4edda; border-color: #c3e6cb; }
+        .error { background: #f8d7da; border-color: #f5c6cb; }
+        .info { background: #d1ecf1; border-color: #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        .log {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Admin Debug Tool</h1>
+        
+        <div class="section info">
+            <h3>Rahul's Credentials</h3>
+            <p><strong>UID:</strong> lwrLF01gp1hcEwF0rZr4vu6oeju2</p>
+            <p><strong>Email:</strong> rahulkashyap10091009@gmail.com</p>
+            <p><strong>Password:</strong> @rahul420</p>
+        </div>
+
+        <div class="section">
+            <h3>Step 1: Login</h3>
+            <input type="email" id="email" placeholder="Email" value="rahulkashyap10091009@gmail.com" style="width: 300px; padding: 8px; margin: 5px;">
+            <br>
+            <input type="password" id="password" placeholder="Password" value="@rahul420" style="width: 300px; padding: 8px; margin: 5px;">
+            <br>
+            <button onclick="login()">Login</button>
+            <button onclick="logout()">Logout</button>
+        </div>
+
+        <div class="section">
+            <h3>Step 2: Check Admin Status</h3>
+            <button onclick="checkAdminStatus()">Check Admin Status</button>
+            <button onclick="makeAdmin()">Make Admin</button>
+            <button onclick="testAdminAccess()">Test Admin Access</button>
+        </div>
+
+        <div class="section">
+            <h3>Step 3: Debug Information</h3>
+            <button onclick="showUserInfo()">Show User Info</button>
+            <button onclick="showFirestoreData()">Show Firestore Data</button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+
+        <div class="section">
+            <h3>Debug Log</h3>
+            <div id="log" class="log"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            onAuthStateChanged(auth, function(user) {
+                currentUser = user;
+                if (user) {
+                    log('✅ User logged in: ' + user.email);
+                    log('UID: ' + user.uid);
+                } else {
+                    log('❌ No user logged in');
+                }
+            });
+        });
+
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            try {
+                log('🔐 Attempting login...');
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                log('✅ Login successful!');
+            } catch (error) {
+                log('❌ Login failed: ' + error.message);
+            }
+        }
+
+        function logout() {
+            auth.signOut();
+            log('🚪 Logged out');
+        }
+
+        async function checkAdminStatus() {
+            if (!currentUser) {
+                log('❌ Please login first');
+                return;
+            }
+
+            log('🔍 Checking admin status...');
+            
+            // Check hardcoded lists
+            const ADMIN_UIDS = ['lwrLF01gp1hcEwF0rZr4vu6oeju2'];
+            const ADMIN_EMAILS = ['rahulkashyap10091009@gmail.com'];
+            
+            if (ADMIN_UIDS.includes(currentUser.uid)) {
+                log('✅ Admin access via UID');
+                return;
+            }
+            
+            if (ADMIN_EMAILS.includes(currentUser.email)) {
+                log('✅ Admin access via email');
+                return;
+            }
+            
+            // Check Firestore
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    log('📄 User data from Firestore: ' + JSON.stringify(userData, null, 2));
+                    
+                    if (userData.admin === true) {
+                        log('✅ Admin access via Firestore admin field');
+                        return;
+                    } else {
+                        log('❌ No admin field or admin: false');
+                    }
+                } else {
+                    log('❌ User document not found in Firestore');
+                }
+            } catch (error) {
+                log('❌ Error checking Firestore: ' + error.message);
+            }
+            
+            log('❌ No admin access found');
+        }
+
+        async function makeAdmin() {
+            if (!currentUser) {
+                log('❌ Please login first');
+                return;
+            }
+
+            try {
+                log('🔧 Making user admin...');
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    admin: true
+                });
+                log('✅ User made admin successfully!');
+            } catch (error) {
+                log('❌ Failed to make admin: ' + error.message);
+            }
+        }
+
+        async function testAdminAccess() {
+            if (!currentUser) {
+                log('❌ Please login first');
+                return;
+            }
+
+            log('🧪 Testing admin access...');
+            await checkAdminStatus();
+        }
+
+        async function showUserInfo() {
+            if (!currentUser) {
+                log('❌ Please login first');
+                return;
+            }
+
+            log('👤 User Information:');
+            log('UID: ' + currentUser.uid);
+            log('Email: ' + currentUser.email);
+            log('Display Name: ' + (currentUser.displayName || 'N/A'));
+            log('Phone: ' + (currentUser.phoneNumber || 'N/A'));
+        }
+
+        async function showFirestoreData() {
+            if (!currentUser) {
+                log('❌ Please login first');
+                return;
+            }
+
+            try {
+                log('📊 Fetching Firestore data...');
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    log('📄 Firestore Data:');
+                    log(JSON.stringify(userData, null, 2));
+                } else {
+                    log('❌ User document not found in Firestore');
+                }
+            } catch (error) {
+                log('❌ Error fetching Firestore data: ' + error.message);
+            }
+        }
+
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+    </script>
+</body>
+</html>
