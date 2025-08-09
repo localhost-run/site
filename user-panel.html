@@ -1,0 +1,3275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Free Fire Tournament - User Panel</title>
+    
+    <!-- 
+    ADMIN CREDENTIALS (for reference):
+    UID: lwrLF01gp1hcEwF0rZr4vu6oeju2
+    Email: rahulkashyap10091009@gmail.com
+    Password: @rahul420
+    
+    To make this user admin in Firestore:
+    1. Login to user panel with these credentials
+    2. Open browser console (F12)
+    3. Run: makeCurrentUserAdmin()
+    4. Refresh page and try admin panel
+    -->
+    
+    <!-- Firebase SDK v9+ (Modular) -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
+        import { getFirestore, collection, doc, setDoc, getDoc, getDocs, updateDoc, addDoc, onSnapshot, query, orderBy, limit, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        import { getStorage, ref, uploadBytes, getDownloadURL } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js';
+        
+        // TODO: Replace with your Firebase config
+        const firebaseConfig = {
+            apiKey: "YOUR_API_KEY",
+            authDomain: "YOUR_AUTH_DOMAIN",
+            databaseURL: "YOUR_DATABASE_URL",
+            projectId: "YOUR_PROJECT_ID",
+            storageBucket: "YOUR_STORAGE_BUCKET",
+            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+            appId: "YOUR_APP_ID",
+            measurementId: "YOUR_MEASUREMENT_ID"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const storage = getStorage(app);
+
+        // Make Firebase available globally
+        window.auth = auth;
+        window.db = db;
+        window.storage = storage;
+        window.signInWithEmailAndPassword = signInWithEmailAndPassword;
+        window.createUserWithEmailAndPassword = createUserWithEmailAndPassword;
+        window.signInWithPhoneNumber = signInWithPhoneNumber;
+        window.RecaptchaVerifier = RecaptchaVerifier;
+        window.collection = collection;
+        window.doc = doc;
+        window.setDoc = setDoc;
+        window.getDoc = getDoc;
+        window.getDocs = getDocs;
+        window.updateDoc = updateDoc;
+        window.addDoc = addDoc;
+        window.onSnapshot = onSnapshot;
+        window.query = query;
+        window.orderBy = orderBy;
+        window.limit = limit;
+        window.where = where;
+    </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .profile-pic {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+
+        .wallet-balance {
+            background: rgba(255,255,255,0.2);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .notification-icon {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4757;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 18px;
+            min-height: 18px;
+            z-index: 10;
+        }
+
+        /* Banner Carousel */
+        .banner-carousel {
+            position: relative;
+            height: 150px;
+            overflow: hidden;
+            background: #f0f0f0;
+        }
+
+        .banner-slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .banner-slide.active {
+            opacity: 1;
+        }
+
+        .banner-dots {
+            position: absolute;
+            bottom: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .banner-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.5);
+            cursor: pointer;
+        }
+
+        .banner-dot.active {
+            background: white;
+        }
+
+        /* Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-around;
+            padding: 0.5rem 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .nav-item.active {
+            background: #f0f0f0;
+            color: #667eea;
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+        }
+
+        .nav-item span {
+            font-size: 0.7rem;
+        }
+
+        /* Content Sections */
+        .content-section {
+            padding: 1rem;
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .content-section h2 {
+            color: #333;
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .content-section h3 {
+            color: #333;
+            margin-bottom: 0.75rem;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .match-card {
+            border-left: 4px solid #667eea;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .match-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .match-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .match-status {
+            background: #667eea;
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+        }
+
+        .match-status.status-live {
+            background: #ff4757;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .room-details {
+            background: #f8f9fa;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin: 0.75rem 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .room-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+        }
+
+        .room-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.4rem;
+            background: white;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .match-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        /* Smooth scrolling improvements */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Better touch scrolling for mobile */
+        * {
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Improved focus states for accessibility */
+        .btn:focus,
+        .form-input:focus,
+        .nav-item:focus {
+            outline: 2px solid #667eea;
+            outline-offset: 2px;
+        }
+
+        .match-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .match-detail {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .join-btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            width: 100%;
+            transition: transform 0.2s;
+            font-size: 0.9rem;
+        }
+
+        .join-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .join-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Forms */
+        .form-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.4rem;
+            font-weight: 500;
+            color: #333;
+            font-size: 0.9rem;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 0.6rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 0.9rem;
+            transition: transform 0.2s;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        /* Auth Forms */
+        .auth-container {
+            padding: 2rem 1rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 2rem;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background-color 0.2s;
+        }
+
+        .auth-tab.active {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        /* Leaderboard */
+        .leaderboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .leaderboard-header h2 {
+            margin: 0;
+            color: #333;
+            font-size: 1.5rem;
+        }
+
+        .leaderboard-tabs {
+            display: flex;
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 0.25rem;
+        }
+
+        .leaderboard-tab {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: transparent;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .leaderboard-tab.active {
+            background: white;
+            color: #667eea;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .leaderboard-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .leaderboard-stat {
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .leaderboard-stat .stat-icon {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .leaderboard-stat .stat-content {
+            flex: 1;
+        }
+
+        .leaderboard-stat .stat-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .leaderboard-stat .stat-label {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .leaderboard-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        .leaderboard-content {
+            display: none;
+        }
+
+        .leaderboard-content.active {
+            display: block;
+        }
+
+        .match-selector {
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .leaderboard-list {
+            max-height: 400px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+        }
+
+        .leaderboard-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .leaderboard-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .leaderboard-list::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .leaderboard-item:hover {
+            background: #f8f9fa;
+        }
+
+        .leaderboard-item.current-user {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .leaderboard-item.current-user .leaderboard-name,
+        .leaderboard-item.current-user .leaderboard-email,
+        .leaderboard-item.current-user .leaderboard-score {
+            color: white;
+        }
+
+        .leaderboard-rank {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1rem;
+            flex-shrink: 0;
+        }
+
+        .leaderboard-rank.gold { 
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            color: #333;
+        }
+        .leaderboard-rank.silver { 
+            background: linear-gradient(135deg, #c0c0c0 0%, #e5e5e5 100%);
+            color: #333;
+        }
+        .leaderboard-rank.bronze { 
+            background: linear-gradient(135deg, #cd7f32 0%, #daa520 100%);
+            color: white;
+        }
+
+        .leaderboard-user {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .leaderboard-name {
+            font-weight: 600;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .leaderboard-email {
+            font-size: 0.8rem;
+            color: #666;
+            opacity: 0.8;
+        }
+
+        .leaderboard-score {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #28a745;
+            text-align: right;
+            min-width: 80px;
+        }
+
+        .leaderboard-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            padding: 1rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .your-rank {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rank-label {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .rank-value {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 1.1rem;
+        }
+
+        .refresh-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: #5a6fd8;
+        }
+
+        /* Wallet */
+        .wallet-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            text-align: center;
+        }
+
+        .wallet-balance-large {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .balance-type {
+            text-align: center;
+        }
+
+        .balance-type-title {
+            font-size: 0.85rem;
+            opacity: 0.9;
+            margin-bottom: 0.4rem;
+        }
+
+        .balance-type-amount {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .add-money-form, .withdraw-form {
+            margin-top: 0.75rem;
+        }
+
+        .scanner-container {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .scanner-container:hover {
+            border-color: #667eea;
+        }
+
+        .scanner-qr {
+            margin-bottom: 0.75rem;
+        }
+
+        .scanner-qr img {
+            width: 150px;
+            height: 150px;
+            object-fit: contain;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .scanner-qr i {
+            font-size: 3rem;
+            color: #667eea;
+        }
+
+        .scanner-instructions {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+
+        .scanner-upi {
+            font-size: 0.85rem;
+            color: #667eea;
+            font-weight: 600;
+            background: rgba(102, 126, 234, 0.1);
+            padding: 0.5rem;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        .withdraw-form {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .transaction-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.9rem;
+            transition: background-color 0.2s ease;
+        }
+
+        .transaction-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .transaction-item:last-child {
+            border-bottom: none;
+        }
+
+        .transaction-info {
+            flex: 1;
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .transaction-amount.positive {
+            color: #28a745;
+        }
+
+        .transaction-amount.negative {
+            color: #dc3545;
+        }
+
+        .transaction-date {
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .transaction-history-container {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .transaction-history-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .transaction-history-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .transaction-history-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .notifications-container {
+            max-height: 300px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scroll-behavior: smooth;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            background: white;
+        }
+
+        .notifications-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .notifications-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .notifications-container::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+
+        .balance-types {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .balance-type {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .balance-type-title {
+            font-size: 0.8rem;
+            opacity: 0.8;
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-type-amount {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .add-money-form {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .scanner-container {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            margin: 0.75rem 0;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .scanner-container:hover {
+            border-color: #667eea;
+        }
+
+        .scanner-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 0.5rem;
+        }
+
+        .withdraw-form {
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Profile */
+        .profile-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .profile-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            margin: 0 auto 0.75rem;
+        }
+
+        .profile-avatar img {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        /* Chat */
+        .chat-container {
+            height: 400px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .chat-message {
+            background: white;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .chat-input-container {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .chat-send {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #666;
+        }
+
+        /* Error */
+        .error {
+            background: #ff4757;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Success */
+        .success {
+            background: #28a745;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .container {
+                margin: 0;
+            }
+            
+            .content-section {
+                padding: 0.75rem;
+                padding-bottom: 80px;
+            }
+            
+            .match-card {
+                padding: 0.75rem;
+                margin-bottom: 0.75rem;
+            }
+            
+            .transaction-item {
+                padding: 0.75rem;
+            }
+        }
+
+        /* Enhanced mobile scrolling */
+        @media (max-width: 768px) {
+            .content-section {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+            
+            .leaderboard-list,
+            .transaction-history-container,
+            .notifications-container {
+                -webkit-overflow-scrolling: touch;
+                scroll-behavior: smooth;
+            }
+        }
+
+        .match-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .notification-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background-color 0.2s;
+        }
+
+        .notification-item.unread {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+        }
+
+        .notification-item.read {
+            background: white;
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .notification-content p {
+            margin: 0 0 0.25rem 0;
+            color: #666;
+        }
+
+        .notification-content small {
+            color: #999;
+            font-size: 0.8rem;
+        }
+
+        .btn-small {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* Main content wrapper */
+        .main-content {
+            height: calc(100vh - 120px); /* Account for header and bottom nav */
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Enhanced scroll for all content sections */
+        .content-section {
+            height: 100%;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            padding: 1rem;
+            padding-bottom: 80px; /* Extra space for bottom nav */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+            scroll-behavior: smooth;
+        }
+
+        .content-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .content-section::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .content-section::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 4px;
+            border: 1px solid #f1f1f1;
+        }
+
+        .content-section::-webkit-scrollbar-thumb:hover {
+            background: #5a6fd8;
+        }
+
+        /* Hide scrollbar on mobile devices */
+        @media (max-width: 768px) {
+            .content-section::-webkit-scrollbar {
+                width: 0;
+                background: transparent;
+            }
+            
+            .content-section {
+                scrollbar-width: none; /* Firefox */
+                -ms-overflow-style: none; /* IE and Edge */
+            }
+        }
+        .referral-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .referral-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .referral-item strong {
+            color: #333;
+        }
+
+        .referral-item span {
+            color: #667eea;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Section -->
+        <div id="authSection" class="auth-container">
+            <h1 style="text-align: center; margin-bottom: 2rem; color: #667eea;">Free Fire Tournament</h1>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchAuthTab('login')">Login</div>
+                <div class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="loginEmail" class="form-input" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="loginPassword" class="form-input" placeholder="Enter your password">
+                </div>
+                <button class="btn" onclick="login()">Login</button>
+                
+                <div style="text-align: center; margin-top: 1rem;">
+                    <p>Or</p>
+                    <button class="btn btn-secondary" onclick="showPhoneAuth()">Login with Phone</button>
+                </div>
+            </div>
+
+            <!-- Signup Form -->
+            <div id="signupForm" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="signupName" class="form-input" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" id="signupEmail" class="form-input" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="signupPassword" class="form-input" placeholder="Enter your password">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Referral Code</label>
+                    <input type="text" id="signupReferralCode" class="form-input" placeholder="Enter referral code (optional)">
+                </div>
+                <button class="btn" onclick="signup()">Sign Up</button>
+            </div>
+
+            <!-- Phone Auth -->
+            <div id="phoneAuth" class="auth-form" style="display: none;">
+                <div class="form-group">
+                    <label class="form-label">Phone Number</label>
+                    <input type="tel" id="phoneNumber" class="form-input" placeholder="+1234567890">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Referral Code (Optional)</label>
+                    <input type="text" id="phoneReferralCode" class="form-input" placeholder="Enter referral code">
+                </div>
+                <div id="recaptcha-container"></div>
+                <button class="btn" onclick="sendOTP()">Send OTP</button>
+                
+                <div id="otpSection" style="display: none;">
+                    <div class="form-group">
+                        <label class="form-label">OTP Code</label>
+                        <input type="text" id="otpCode" class="form-input" placeholder="Enter 6-digit OTP">
+                    </div>
+                    <button class="btn" onclick="verifyOTP()">Verify OTP</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main App -->
+        <div id="mainApp" style="display: none;">
+            <!-- Header -->
+            <div class="header">
+                <div class="header-content">
+                    <div class="logo">Free Fire</div>
+                    <div class="header-actions">
+                        <div class="wallet-balance">
+                            <i class="fas fa-wallet"></i>
+                            <span id="headerBalance">₹0</span>
+                        </div>
+                        <div class="notification-icon" onclick="showNotifications()">
+                            <i class="fas fa-bell"></i>
+                            <div class="notification-badge" id="notificationBadge">0</div>
+                        </div>
+                        <div class="profile-pic" onclick="showSection('profile')">
+                            <i class="fas fa-user"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Banner Carousel -->
+            <div class="banner-carousel">
+                <div id="bannerSlides"></div>
+                <div class="banner-dots" id="bannerDots"></div>
+            </div>
+
+            <!-- Main Content Wrapper -->
+            <div class="main-content">
+                <!-- Content Sections -->
+                <div class="content-section active" id="homeSection">
+                    <h2>Upcoming Matches</h2>
+                    <div id="matchesList"></div>
+                </div>
+
+                <div class="content-section" id="matchesSection">
+                    <h2>All Matches</h2>
+                    <div id="allMatchesList"></div>
+                </div>
+
+                <div class="content-section" id="leaderboardSection">
+                    <div class="leaderboard-header">
+                        <h2>🏆 Global Leaderboard</h2>
+                        <div class="leaderboard-tabs">
+                            <button class="leaderboard-tab active" onclick="switchLeaderboardTab('global')">Global</button>
+                            <button class="leaderboard-tab" onclick="switchLeaderboardTab('matches')">Match Winners</button>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-stats">
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">👑</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="topPlayerName">Loading...</div>
+                                <div class="stat-label">Top Player</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="topPlayerBalance">₹0</div>
+                                <div class="stat-label">Highest Balance</div>
+                            </div>
+                        </div>
+                        <div class="leaderboard-stat">
+                            <div class="stat-icon">🎮</div>
+                            <div class="stat-content">
+                                <div class="stat-value" id="totalPlayers">0</div>
+                                <div class="stat-label">Total Players</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-container">
+                        <div id="globalLeaderboard" class="leaderboard-content active">
+                            <div class="leaderboard-list" id="leaderboardList"></div>
+                        </div>
+                        
+                        <div id="matchLeaderboard" class="leaderboard-content">
+                            <div class="match-selector">
+                                <select id="matchSelector" class="form-input" onchange="loadMatchLeaderboard()">
+                                    <option value="">Select a match...</option>
+                                </select>
+                            </div>
+                            <div class="leaderboard-list" id="matchLeaderboardList"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="leaderboard-footer">
+                        <div class="your-rank">
+                            <span class="rank-label">Your Rank:</span>
+                            <span class="rank-value" id="userRank">Loading...</span>
+                        </div>
+                        <div class="refresh-btn" onclick="refreshLeaderboard()">
+                            <i class="fas fa-sync-alt"></i> Refresh
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section" id="walletSection">
+                    <div class="wallet-card">
+                        <div class="balance-types">
+                            <div class="balance-type">
+                                <div class="balance-type-title">Added Balance</div>
+                                <div class="balance-type-amount" id="addedBalance">₹0</div>
+                            </div>
+                            <div class="balance-type">
+                                <div class="balance-type-title">Winning Balance</div>
+                                <div class="balance-type-amount" id="winningBalance">₹0</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Add Money Section -->
+                    <div class="card">
+                        <h3>Add Money</h3>
+                        <div class="add-money-form">
+                            <div class="form-group">
+                                <label class="form-label">Amount</label>
+                                <input type="number" id="addMoneyAmount" class="form-input" placeholder="Enter amount" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">UPI ID</label>
+                                <input type="text" id="upiId" class="form-input" placeholder="Enter your UPI ID">
+                            </div>
+                            <div class="scanner-container" onclick="showScanner()">
+                                <div class="scanner-qr" id="scannerQrImage">
+                                    <i class="fas fa-qrcode"></i>
+                                </div>
+                                <div class="scanner-instructions" id="scannerInstructions">
+                                    Click to view payment details
+                                </div>
+                                <div class="scanner-upi" id="scannerUpiId">
+                                    UPI ID: Loading...
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">UTR Number (Optional)</label>
+                                <input type="text" id="utrNumber" class="form-input" placeholder="Enter UTR number if available">
+                            </div>
+                            <button class="btn" onclick="addMoney()">Request Add Money</button>
+                        </div>
+                    </div>
+
+                    <!-- Withdraw Section -->
+                    <div class="card">
+                        <h3>Withdraw Money</h3>
+                        <div class="withdraw-form">
+                            <div class="form-group">
+                                <label class="form-label">Amount (Winning Balance Only)</label>
+                                <input type="number" id="withdrawAmount" class="form-input" placeholder="Enter amount to withdraw" min="1">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">UPI ID</label>
+                                <input type="text" id="withdrawUpiId" class="form-input" placeholder="Enter UPI ID for withdrawal">
+                            </div>
+                            <button class="btn" onclick="withdrawMoney()">Withdraw Money</button>
+                        </div>
+                    </div>
+
+                    <!-- Transaction History -->
+                    <div class="card">
+                        <h3>Transaction History</h3>
+                        <div class="transaction-history-container">
+                            <div id="transactionHistory">
+                                <!-- Transaction history will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="content-section" id="profileSection">
+                    <div class="profile-header">
+                        <div class="profile-avatar" id="profileAvatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <h3 id="profileName">User Name</h3>
+                    </div>
+
+                    <div class="card">
+                        <h3>Profile Information</h3>
+                        <div class="form-group">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="profileNameInput" class="form-input">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Display Photo URL</label>
+                            <input type="url" id="profilePhotoUrl" class="form-input" placeholder="https://example.com/photo.jpg">
+                        </div>
+                        <button class="btn" onclick="updateProfile()">Update Profile</button>
+                    </div>
+
+                    <div class="card">
+                        <h3>Referral Information</h3>
+                        <div class="referral-info">
+                            <div class="referral-item">
+                                <strong>Your Referral Code:</strong>
+                                <span id="userReferralCode">Loading...</span>
+                            </div>
+                            <div class="referral-item">
+                                <strong>Total Earnings:</strong>
+                                <span id="userReferralEarnings">₹0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn" style="background: #ff4757;" onclick="logout()">Logout</button>
+                </div>
+
+                <!-- Notifications Section -->
+                <div class="content-section" id="notificationsSection">
+                    <div class="card">
+                        <h3>Notifications</h3>
+                        <div class="notifications-container">
+                            <div id="notificationsList">
+                                <!-- Notifications will be loaded here -->
+                            </div>
+                        </div>
+                        <div style="margin-top: 1rem; text-align: center;">
+                            <button class="btn btn-secondary" onclick="createTestNotification()" style="font-size: 0.8rem; padding: 0.5rem 1rem;">
+                                Create Test Notification
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <div class="nav-item active" onclick="showSection('home')">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </div>
+                <div class="nav-item" onclick="showSection('matches')">
+                    <i class="fas fa-gamepad"></i>
+                    <span>Matches</span>
+                </div>
+                <div class="nav-item" onclick="showSection('leaderboard')">
+                    <i class="fas fa-trophy"></i>
+                    <span>Leaderboard</span>
+                </div>
+                <div class="nav-item" onclick="showSection('wallet')">
+                    <i class="fas fa-wallet"></i>
+                    <span>Wallet</span>
+                </div>
+                <div class="nav-item" onclick="showSection('profile')">
+                    <i class="fas fa-user"></i>
+                    <span>Profile</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let currentSection = 'home';
+        let bannerInterval;
+        let currentBannerIndex = 0;
+        let isLoadingUserData = false; // Flag to prevent multiple simultaneous calls
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check if user is already logged in
+            auth.onAuthStateChanged(function(user) {
+                try {
+                    if (user) {
+                        currentUser = user;
+                        checkUserBanStatus().catch(error => {
+                            console.error('Error in checkUserBanStatus:', error);
+                            // Fallback: try to show main app anyway
+                            showMainApp();
+                        });
+                    } else {
+                        showAuthSection();
+                    }
+                } catch (error) {
+                    console.error('Error in onAuthStateChanged:', error);
+                    // Fallback: show auth section
+                    showAuthSection();
+                }
+            });
+
+            // Initialize banner carousel
+            initBannerCarousel();
+        });
+
+        async function checkUserBanStatus() {
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.banned) {
+                        alert('Your account has been banned. Please contact admin for support.');
+                        auth.signOut();
+                        showAuthSection();
+                        return;
+                    }
+                }
+                // Load user data and show main app
+                await loadUserData();
+                showMainApp();
+            } catch (error) {
+                console.error('Error checking ban status:', error);
+                // Even if there's an error, try to show main app
+                try {
+                    await loadUserData();
+                } catch (e) {
+                    console.error('Error loading user data:', e);
+                }
+                showMainApp();
+            }
+        }
+
+        // Auth functions
+        function switchAuthTab(tab) {
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(f => f.style.display = 'none');
+            
+            if (tab === 'login') {
+                document.querySelector('.auth-tab:first-child').classList.add('active');
+                document.getElementById('loginForm').style.display = 'block';
+            } else {
+                document.querySelector('.auth-tab:last-child').classList.add('active');
+                document.getElementById('signupForm').style.display = 'block';
+            }
+        }
+
+        function showPhoneAuth() {
+            document.getElementById('loginForm').style.display = 'none';
+            document.getElementById('signupForm').style.display = 'none';
+            document.getElementById('phoneAuth').style.display = 'block';
+            
+            // Initialize reCAPTCHA
+            if (!window.recaptchaVerifier) {
+                window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+                    'size': 'normal',
+                    'callback': (response) => {
+                        console.log('reCAPTCHA solved');
+                    }
+                });
+            }
+            window.recaptchaVerifier.render();
+        }
+
+        async function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                // Don't call loadUserData here - it will be called by onAuthStateChanged
+                showMainApp();
+            } catch (error) {
+                alert('Login failed: ' + error.message);
+            }
+        }
+
+        async function signup() {
+            const name = document.getElementById('signupName').value;
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            const referralCode = document.getElementById('signupReferralCode').value;
+
+            if (!name || !email || !password) {
+                alert('Please fill all required fields');
+                return;
+            }
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                currentUser = userCredential.user;
+                
+                // Get referral settings from admin
+                let referralSettings = {
+                    referrerBonus: 500,
+                    newUserBonus: 500,
+                    defaultSignupBonus: 1000
+                };
+                
+                try {
+                    const settingsDoc = await getDoc(doc(db, 'referralSettings', 'current'));
+                    if (settingsDoc.exists()) {
+                        const settings = settingsDoc.data();
+                        referralSettings = {
+                            referrerBonus: settings.referrerBonus || 500,
+                            newUserBonus: settings.newUserBonus || 500,
+                            defaultSignupBonus: settings.defaultSignupBonus || 1000
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading referral settings:', error);
+                    // Use default values if settings can't be loaded
+                }
+                
+                // Generate referral code for new user
+                const newUserReferralCode = generateReferralCode();
+                
+                // Create user document with referral data
+                const userData = {
+                    name: name,
+                    email: email,
+                    addedBalance: referralSettings.defaultSignupBonus || 1000,
+                    winningBalance: 0,
+                    referralCode: newUserReferralCode,
+                    referralEarnings: 0,
+                    referredBy: null, // Will be set if referral code is valid
+                    banned: false,
+                    status: 'active',
+                    createdAt: new Date()
+                };
+
+                // Process referral if provided
+                if (referralCode) {
+                    try {
+                        // Find user with this referral code
+                        const usersSnapshot = await getDocs(collection(db, 'users'));
+                        let referrerFound = false;
+                        
+                        usersSnapshot.forEach(doc => {
+                            const user = doc.data();
+                            if (user.referralCode === referralCode && doc.id !== userCredential.user.uid) {
+                                referrerFound = true;
+                                
+                                // Update referrer's earnings
+                                const referrerBonus = referralSettings.referrerBonus || 500;
+                                updateDoc(doc(db, 'users', doc.id), {
+                                    referralEarnings: (user.referralEarnings || 0) + referrerBonus
+                                });
+                                
+                                // Update new user's data
+                                userData.referredBy = doc.id;
+                                userData.addedBalance = (referralSettings.defaultSignupBonus || 1000) + (referralSettings.newUserBonus || 500);
+                                
+                                // Create referral record
+                                addDoc(collection(db, 'referrals'), {
+                                    referrerId: doc.id,
+                                    referredUserId: userCredential.user.uid,
+                                    referrerName: user.name,
+                                    referredUserName: name,
+                                    referrerEmail: user.email,
+                                    referredUserEmail: email,
+                                    referrerBonus: referrerBonus,
+                                    referredUserBonus: referralSettings.newUserBonus || 500,
+                                    timestamp: new Date(),
+                                    status: 'completed'
+                                });
+                            }
+                        });
+                        
+                        if (!referrerFound) {
+                            alert('Invalid referral code. Proceeding without referral bonus.');
+                        }
+                    } catch (error) {
+                        console.error('Error processing referral:', error);
+                        alert('Error processing referral. Proceeding without referral bonus.');
+                    }
+                }
+
+                await setDoc(doc(db, 'users', userCredential.user.uid), userData);
+                
+                alert('Account created successfully! Welcome bonus added to your wallet.');
+                // Don't call loadUserData here - it will be called by onAuthStateChanged
+                showMainApp();
+            } catch (error) {
+                alert('Signup failed: ' + error.message);
+            }
+        }
+
+        async function sendOTP() {
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            
+            try {
+                const appVerifier = window.recaptchaVerifier;
+                const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+                window.confirmationResult = confirmationResult;
+                
+                document.getElementById('otpSection').style.display = 'block';
+                alert('OTP sent to your phone number');
+            } catch (error) {
+                alert('Failed to send OTP: ' + error.message);
+            }
+        }
+
+        async function verifyOTP() {
+            const otp = document.getElementById('otpCode').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const referralCode = document.getElementById('phoneReferralCode').value;
+
+            if (!otp) {
+                alert('Please enter OTP');
+                return;
+            }
+
+            try {
+                const result = await window.confirmationResult.confirm(otp);
+                currentUser = result.user;
+                
+                // Get referral settings from admin
+                let referralSettings = {
+                    referrerBonus: 500,
+                    newUserBonus: 500,
+                    defaultSignupBonus: 1000
+                };
+                
+                try {
+                    const settingsDoc = await getDoc(doc(db, 'referralSettings', 'current'));
+                    if (settingsDoc.exists()) {
+                        const settings = settingsDoc.data();
+                        referralSettings = {
+                            referrerBonus: settings.referrerBonus || 500,
+                            newUserBonus: settings.newUserBonus || 500,
+                            defaultSignupBonus: settings.defaultSignupBonus || 1000
+                        };
+                    }
+                } catch (error) {
+                    console.error('Error loading referral settings:', error);
+                    // Use default values if settings can't be loaded
+                }
+                
+                // Generate referral code for new user
+                const newUserReferralCode = generateReferralCode();
+                
+                // Create user document with referral data
+                const userData = {
+                    name: `User${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                    email: `${phoneNumber}@phone.com`,
+                    phoneNumber: phoneNumber,
+                    addedBalance: referralSettings.defaultSignupBonus || 1000,
+                    winningBalance: 0,
+                    referralCode: newUserReferralCode,
+                    referralEarnings: 0,
+                    referredBy: null,
+                    banned: false,
+                    status: 'active',
+                    createdAt: new Date()
+                };
+
+                // Process referral if provided
+                if (referralCode) {
+                    try {
+                        const usersSnapshot = await getDocs(collection(db, 'users'));
+                        let referrerFound = false;
+                        
+                        usersSnapshot.forEach(doc => {
+                            const user = doc.data();
+                            if (user.referralCode === referralCode && doc.id !== result.user.uid) {
+                                referrerFound = true;
+                                
+                                const referrerBonus = referralSettings.referrerBonus || 500;
+                                updateDoc(doc(db, 'users', doc.id), {
+                                    referralEarnings: (user.referralEarnings || 0) + referrerBonus
+                                });
+                                
+                                userData.referredBy = doc.id;
+                                userData.addedBalance = (referralSettings.defaultSignupBonus || 1000) + (referralSettings.newUserBonus || 500);
+                                
+                                addDoc(collection(db, 'referrals'), {
+                                    referrerId: doc.id,
+                                    referredUserId: result.user.uid,
+                                    referrerName: user.name,
+                                    referredUserName: userData.name,
+                                    referrerEmail: user.email,
+                                    referredUserEmail: userData.email,
+                                    referrerBonus: referrerBonus,
+                                    referredUserBonus: referralSettings.newUserBonus || 500,
+                                    timestamp: new Date(),
+                                    status: 'completed'
+                                });
+                            }
+                        });
+                        
+                        if (!referrerFound) {
+                            alert('Invalid referral code. Proceeding without referral bonus.');
+                        }
+                    } catch (error) {
+                        console.error('Error processing referral:', error);
+                        alert('Error processing referral. Proceeding without referral bonus.');
+                    }
+                }
+
+                await setDoc(doc(db, 'users', result.user.uid), userData);
+                
+                alert('Phone verification successful! Welcome bonus added to your wallet.');
+                // Don't call loadUserData here - it will be called by onAuthStateChanged
+                showMainApp();
+            } catch (error) {
+                alert('OTP verification failed: ' + error.message);
+            }
+        }
+
+        async function viewMatchDetails(matchId) {
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    alert('Match not found!');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                const isJoined = match.joinedPlayers && match.joinedPlayers.includes(currentUser.uid);
+                const isLive = match.status === 'live';
+
+                // Get joined players details
+                let joinedPlayersDetails = '';
+                if (match.joinedPlayers && match.joinedPlayers.length > 0) {
+                    const playersDetails = [];
+                    for (const playerId of match.joinedPlayers) {
+                        try {
+                            const playerDoc = await getDoc(doc(db, 'users', playerId));
+                            if (playerDoc.exists()) {
+                                const playerData = playerDoc.data();
+                                const gameName = match.playerGameNames && match.playerGameNames[playerId] ? match.playerGameNames[playerId] : 'Not provided';
+                                playersDetails.push({
+                                    name: playerData.name || 'Unknown Player',
+                                    email: playerData.email || 'No email',
+                                    gameName: gameName,
+                                    isCurrentUser: playerId === currentUser.uid
+                                });
+                            } else {
+                                const gameName = match.playerGameNames && match.playerGameNames[playerId] ? match.playerGameNames[playerId] : 'Not provided';
+                                playersDetails.push({
+                                    name: 'Unknown Player',
+                                    email: 'No email',
+                                    gameName: gameName,
+                                    isCurrentUser: false
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Error fetching player details:', error);
+                            const gameName = match.playerGameNames && match.playerGameNames[playerId] ? match.playerGameNames[playerId] : 'Not provided';
+                            playersDetails.push({
+                                name: 'Unknown Player',
+                                email: 'No email',
+                                gameName: gameName,
+                                isCurrentUser: false
+                            });
+                        }
+                    }
+                    
+                    joinedPlayersDetails = `
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.5rem;">👥 Joined Players (${playersDetails.length})</h3>
+                            <div style="max-height: 200px; overflow-y: auto;">
+                                ${playersDetails.map((player, index) => `
+                                    <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; margin-bottom: 0.5rem;">
+                                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                            <span style="color: #667eea; font-weight: 600;">${index + 1}.</span>
+                                            <span style="font-weight: 500;">${player.name}</span>
+                                            ${player.isCurrentUser ? '<span style="color: #28a745; font-size: 0.8rem; margin-left: 0.5rem;">(You)</span>' : ''}
+                                        </div>
+                                        <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                                            <div style="font-size: 0.8rem; color: #28a745; font-weight: 600;">${player.gameName}</div>
+                                        </div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+
+                let detailsHtml = `
+                    <div style="max-width: 500px; margin: 0 auto; padding: 1rem;">
+                        <h2 style="color: #667eea; margin-bottom: 1rem;">${match.title}</h2>
+                        ${match.bannerUrl ? `<img src="${match.bannerUrl}" alt="${match.title}" style="width: 100%; height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 1rem;">` : ''}
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.5rem;">Match Details</h3>
+                            <p><strong>Game:</strong> ${match.game}</p>
+                            <p><strong>Entry Fee:</strong> ₹${match.entryFee}</p>
+                            <p><strong>Players:</strong> ${match.joinedPlayers ? match.joinedPlayers.length : 0}/${match.maxPlayers}</p>
+                            <p><strong>Status:</strong> ${isLive ? 'LIVE' : 'Upcoming'}</p>
+                        </div>
+                        ${joinedPlayersDetails}
+                `;
+
+                if (match.description) {
+                    detailsHtml += `
+                        <div style="background: #f8f9fa; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.5rem;">Description</h3>
+                            <p>${match.description}</p>
+                        </div>
+                    `;
+                }
+
+                if (isLive && isJoined && match.roomId) {
+                    detailsHtml += `
+                        <div style="background: #667eea; color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                            <h3 style="margin-bottom: 0.5rem;">🎮 Room Details</h3>
+                            <p><strong>Room ID:</strong> ${match.roomId}</p>
+                            ${match.roomPassword ? `<p><strong>Password:</strong> ${match.roomPassword}</p>` : ''}
+                        </div>
+                    `;
+                }
+
+                detailsHtml += '</div>';
+
+                // Create a modal or use alert for now
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0,0,0,0.8);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                `;
+                modal.innerHTML = `
+                    <div style="background: white; border-radius: 12px; padding: 2rem; max-width: 90%; max-height: 90%; overflow-y: auto;">
+                        ${detailsHtml}
+                        <button onclick="this.parentElement.parentElement.remove()" style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
+                            Close
+                        </button>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            } catch (error) {
+                console.error('Error viewing match details:', error);
+                alert('Failed to load match details: ' + error.message);
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                auth.signOut();
+                showAuthSection();
+            }
+        }
+
+        // UI functions
+        function showAuthSection() {
+            document.getElementById('authSection').style.display = 'block';
+            document.getElementById('mainApp').style.display = 'none';
+        }
+
+        function showMainApp() {
+            document.getElementById('authSection').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+            loadUserData();
+            loadMatches();
+            loadLeaderboard();
+            loadBanners();
+        }
+
+        function showSection(section) {
+            // Hide all sections
+            document.querySelectorAll('.content-section').forEach(s => {
+                s.classList.remove('active');
+            });
+            
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            
+            // Show selected section
+            const targetSection = document.getElementById(section + 'Section');
+            if (targetSection) {
+                targetSection.classList.add('active');
+            }
+            
+            // Update navigation
+            const navItem = document.querySelector(`[onclick="showSection('${section}')"]`);
+            if (navItem) {
+                navItem.classList.add('active');
+            }
+            
+            currentSection = section;
+            
+            // Load section-specific data
+            switch(section) {
+                case 'wallet':
+                    loadWalletData();
+                    break;
+                case 'profile':
+                    loadProfileData();
+                    break;
+                case 'notifications':
+                    showNotifications();
+                    break;
+            }
+        }
+
+        // Data loading functions
+        async function loadUserData() {
+            if (!currentUser || isLoadingUserData) return;
+            
+            isLoadingUserData = true;
+            
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    // Update header balance (show total balance)
+                    const totalBalance = (userData.addedBalance || 0) + (userData.winningBalance || 0);
+                    const headerBalance = document.getElementById('headerBalance');
+                    if (headerBalance) {
+                        headerBalance.textContent = `₹${totalBalance}`;
+                    }
+                    
+                    // Update wallet balances
+                    const addedBalance = document.getElementById('addedBalance');
+                    if (addedBalance) {
+                        addedBalance.textContent = `₹${userData.addedBalance || 0}`;
+                    }
+                    
+                    const winningBalance = document.getElementById('winningBalance');
+                    if (winningBalance) {
+                        winningBalance.textContent = `₹${userData.winningBalance || 0}`;
+                    }
+                    
+                    // Update profile data
+                    const profileName = document.getElementById('profileName');
+                    if (profileName) {
+                        profileName.textContent = userData.name || 'User';
+                    }
+                    
+                    const profileNameInput = document.getElementById('profileNameInput');
+                    if (profileNameInput) {
+                        profileNameInput.value = userData.name || '';
+                    }
+                    
+                    const profilePhotoUrl = document.getElementById('profilePhotoUrl');
+                    if (profilePhotoUrl) {
+                        profilePhotoUrl.value = userData.photoURL || '';
+                    }
+                    
+                    const userReferralCode = document.getElementById('userReferralCode');
+                    if (userReferralCode) {
+                        userReferralCode.textContent = userData.referralCode || 'N/A';
+                    }
+                    
+                    const userReferralEarnings = document.getElementById('userReferralEarnings');
+                    if (userReferralEarnings) {
+                        userReferralEarnings.textContent = `₹${userData.referralEarnings || 0}`;
+                    }
+                    
+                    if (userData.photoURL) {
+                        const profileAvatar = document.getElementById('profileAvatar');
+                        if (profileAvatar) {
+                            profileAvatar.style.backgroundImage = `url(${userData.photoURL})`;
+                        }
+                    }
+                }
+
+                // Load notifications count (don't await to prevent blocking)
+                loadNotifications().catch(error => {
+                    console.error('Error loading notifications:', error);
+                    // Set default values on error
+                    const notificationBadge = document.getElementById('notificationBadge');
+                    if (notificationBadge) {
+                        notificationBadge.textContent = '0';
+                        notificationBadge.style.display = 'none';
+                    }
+                    window.userNotifications = [];
+                });
+                
+                // Load scanner settings (don't await to prevent blocking)
+                loadScannerSettings().catch(error => {
+                    console.error('Error loading scanner settings:', error);
+                });
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            } finally {
+                isLoadingUserData = false;
+            }
+        }
+
+        // Test notification permissions
+        async function testNotificationPermissions() {
+            try {
+                console.log('Testing notification permissions...');
+                const testSnapshot = await getDocs(collection(db, 'notifications'));
+                console.log('Notification permissions test successful. Collection size:', testSnapshot.size);
+                return true;
+            } catch (error) {
+                console.error('Notification permissions test failed:', error);
+                return false;
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                if (!currentUser) {
+                    console.log('No current user, skipping notification load');
+                    return;
+                }
+                
+                console.log('Loading notifications for user:', currentUser.uid);
+                
+                // Use a very simple approach - just try to get the collection
+                let notificationsSnapshot;
+                try {
+                    notificationsSnapshot = await getDocs(collection(db, 'notifications'));
+                } catch (collectionError) {
+                    console.error('Error accessing notifications collection:', collectionError);
+                    // If we can't access the collection, just set empty notifications
+                    window.userNotifications = [];
+                    const notificationBadge = document.getElementById('notificationBadge');
+                    if (notificationBadge) {
+                        notificationBadge.textContent = '0';
+                        notificationBadge.style.display = 'none';
+                    }
+                    return;
+                }
+                
+                const userNotifications = [];
+                
+                // Process notifications one by one to avoid any issues
+                for (const doc of notificationsSnapshot.docs) {
+                    try {
+                        const notification = doc.data();
+                        // Check if this notification belongs to current user
+                        if (notification.userId === currentUser.uid) {
+                            userNotifications.push({ 
+                                id: doc.id, 
+                                ...notification 
+                            });
+                        }
+                    } catch (docError) {
+                        console.error('Error processing notification document:', docError);
+                        // Continue with other documents
+                    }
+                }
+                
+                console.log('Found notifications:', userNotifications.length);
+                
+                // Sort by timestamp (newest first) - handle both Firestore Timestamp and Date objects
+                userNotifications.sort((a, b) => {
+                    let aTime, bTime;
+                    
+                    try {
+                        if (a.timestamp && a.timestamp.toDate) {
+                            aTime = a.timestamp.toDate();
+                        } else if (a.timestamp) {
+                            aTime = new Date(a.timestamp);
+                        } else {
+                            aTime = new Date(0);
+                        }
+                        
+                        if (b.timestamp && b.timestamp.toDate) {
+                            bTime = b.timestamp.toDate();
+                        } else if (b.timestamp) {
+                            bTime = new Date(b.timestamp);
+                        } else {
+                            bTime = new Date(0);
+                        }
+                    } catch (error) {
+                        console.error('Error parsing timestamp:', error);
+                        aTime = new Date(0);
+                        bTime = new Date(0);
+                    }
+                    
+                    return bTime - aTime;
+                });
+                
+                const unreadCount = userNotifications.filter(notification => !notification.read).length;
+                console.log('Unread count:', unreadCount);
+                
+                // Update notification badge
+                const notificationBadge = document.getElementById('notificationBadge');
+                if (notificationBadge) {
+                    notificationBadge.textContent = unreadCount;
+                    notificationBadge.style.display = unreadCount > 0 ? 'flex' : 'none';
+                }
+                
+                // Store notifications for display
+                window.userNotifications = userNotifications;
+                
+                console.log('Notifications loaded successfully');
+                
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                
+                // Set default values on error
+                const notificationBadge = document.getElementById('notificationBadge');
+                if (notificationBadge) {
+                    notificationBadge.textContent = '0';
+                    notificationBadge.style.display = 'none';
+                }
+                window.userNotifications = [];
+                
+                // Don't show error to user, just log it
+                console.log('Notification loading failed, using empty list');
+            }
+        }
+
+        async function showNotifications() {
+            try {
+                const notificationsList = document.getElementById('notificationsList');
+                if (!notificationsList) {
+                    console.error('Notifications list element not found');
+                    return;
+                }
+                
+                notificationsList.innerHTML = '';
+                
+                // Load notifications if not already loaded
+                if (!window.userNotifications) {
+                    await loadNotifications();
+                }
+                
+                if (!window.userNotifications || window.userNotifications.length === 0) {
+                    notificationsList.innerHTML = `
+                        <div class="notification-item">
+                            <div class="notification-content">
+                                <h4>No Notifications</h4>
+                                <p>You don't have any notifications yet.</p>
+                            </div>
+                        </div>
+                    `;
+                    showSection('notifications');
+                    return;
+                }
+                
+                window.userNotifications.forEach(notification => {
+                    const notificationItem = document.createElement('div');
+                    notificationItem.className = `notification-item ${notification.read ? 'read' : 'unread'}`;
+                    
+                    let timestamp = 'Unknown';
+                    try {
+                        if (notification.timestamp && notification.timestamp.toDate) {
+                            timestamp = notification.timestamp.toDate().toLocaleString();
+                        } else if (notification.timestamp) {
+                            timestamp = new Date(notification.timestamp).toLocaleString();
+                        }
+                    } catch (error) {
+                        console.error('Error parsing timestamp:', error);
+                        timestamp = 'Unknown';
+                    }
+                    
+                    notificationItem.innerHTML = `
+                        <div class="notification-content">
+                            <h4>${notification.title || 'No Title'}</h4>
+                            <p>${notification.message || 'No Message'}</p>
+                            <small>${timestamp}</small>
+                        </div>
+                        ${!notification.read ? `
+                            <button class="btn btn-small" onclick="markNotificationRead('${notification.id}')">Mark Read</button>
+                        ` : ''}
+                    `;
+                    
+                    notificationsList.appendChild(notificationItem);
+                });
+                
+                showSection('notifications');
+            } catch (error) {
+                console.error('Error showing notifications:', error);
+                const notificationsList = document.getElementById('notificationsList');
+                if (notificationsList) {
+                    notificationsList.innerHTML = `
+                        <div class="notification-item">
+                            <div class="notification-content">
+                                <h4>Error Loading Notifications</h4>
+                                <p>Please try refreshing the page or contact support if the problem persists.</p>
+                            </div>
+                        </div>
+                    `;
+                }
+                showSection('notifications');
+            }
+        }
+
+        async function markNotificationRead(notificationId) {
+            try {
+                await updateDoc(doc(db, 'notifications', notificationId), {
+                    read: true
+                });
+                
+                // Update local notifications
+                const notification = window.userNotifications.find(n => n.id === notificationId);
+                if (notification) {
+                    notification.read = true;
+                }
+                
+                // Reload notifications
+                await loadNotifications();
+                showNotifications();
+            } catch (error) {
+                console.error('Error marking notification as read:', error);
+            }
+        }
+
+        async function loadProfileData() {
+            if (!currentUser) return;
+            
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    
+                    document.getElementById('profileName').textContent = userData.name || 'User';
+                    document.getElementById('profileNameInput').value = userData.name || '';
+                    document.getElementById('profilePhotoUrl').value = userData.photoURL || '';
+                    document.getElementById('userReferralCode').textContent = userData.referralCode || 'N/A';
+                    document.getElementById('userReferralEarnings').textContent = `₹${userData.referralEarnings || 0}`;
+                    
+                    if (userData.photoURL) {
+                        document.getElementById('profileAvatar').style.backgroundImage = `url(${userData.photoURL})`;
+                        document.getElementById('profileAvatar').innerHTML = '';
+                    } else {
+                        document.getElementById('profileAvatar').innerHTML = '<i class="fas fa-user"></i>';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading profile data:', error);
+            }
+        }
+
+        async function updateProfile() {
+            if (!currentUser) return;
+            
+            const name = document.getElementById('profileNameInput').value.trim();
+            const photoURL = document.getElementById('profilePhotoUrl').value.trim();
+            
+            if (!name) {
+                alert('Please enter your name');
+                return;
+            }
+            
+            try {
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    name: name,
+                    photoURL: photoURL
+                });
+                
+                alert('Profile updated successfully!');
+                loadProfileData();
+                loadUserData();
+            } catch (error) {
+                alert('Failed to update profile: ' + error.message);
+            }
+        }
+
+        async function loadMatches() {
+            try {
+                const matchesQuery = query(collection(db, 'matches'), orderBy('startTime', 'asc'));
+                const matchesSnapshot = await getDocs(matchesQuery);
+                
+                const matchesList = document.getElementById('matchesList');
+                const allMatchesList = document.getElementById('allMatchesList');
+                
+                matchesList.innerHTML = '';
+                allMatchesList.innerHTML = '';
+                
+                matchesSnapshot.forEach(doc => {
+                    const match = doc.data();
+                    const matchCard = createMatchCard(match, doc.id);
+                    matchesList.appendChild(matchCard.cloneNode(true));
+                    allMatchesList.appendChild(matchCard);
+                });
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                // Show a user-friendly message
+                const matchesList = document.getElementById('matchesList');
+                const allMatchesList = document.getElementById('allMatchesList');
+                matchesList.innerHTML = '<div class="card"><div class="match-title">No matches found</div></div>';
+                allMatchesList.innerHTML = '<div class="card"><div class="match-title">No matches found</div></div>';
+            }
+        }
+
+        function createMatchCard(match, matchId) {
+            const card = document.createElement('div');
+            card.className = 'card match-card';
+            
+            const isJoined = match.joinedPlayers && match.joinedPlayers.includes(currentUser.uid);
+            const isFull = match.joinedPlayers && match.joinedPlayers.length >= match.maxPlayers;
+            const isLive = match.status === 'live';
+            
+            // Handle timestamp conversion safely
+            let startTimeString = 'N/A';
+            try {
+                if (match.startTime && match.startTime.toDate) {
+                    startTimeString = new Date(match.startTime.toDate()).toLocaleString();
+                } else if (match.startTime) {
+                    startTimeString = new Date(match.startTime).toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error converting timestamp:', error);
+                startTimeString = 'Invalid Date';
+            }
+            
+            // Create match image if available
+            const matchImage = match.bannerUrl ? `
+                <div class="match-image">
+                    <img src="${match.bannerUrl}" alt="${match.title}" style="width: 100%; height: 150px; object-fit: cover; border-radius: 8px; margin-bottom: 0.75rem;">
+                </div>
+            ` : '';
+            
+            // Create room details if match is live and user is joined
+            const roomDetails = (isLive && isJoined && match.roomId) ? `
+                <div class="room-details" style="background: #f8f9fa; padding: 0.75rem; border-radius: 8px; margin: 0.75rem 0;">
+                    <h4 style="margin-bottom: 0.5rem; color: #667eea; font-size: 0.9rem;">🎮 Room Details</h4>
+                    <div class="room-info">
+                        <div class="room-item">
+                            <strong>Room ID:</strong> ${match.roomId}
+                        </div>
+                        ${match.roomPassword ? `
+                            <div class="room-item">
+                                <strong>Password:</strong> ${match.roomPassword}
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            ` : '';
+            
+            // Create description section
+            const descriptionSection = match.description ? `
+                <div class="match-description" style="margin: 0.75rem 0;">
+                    <h4 style="margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">📝 Description</h4>
+                    <p style="color: #666; line-height: 1.4; font-size: 0.85rem;">${match.description}</p>
+                </div>
+            ` : '';
+            
+            // Create joined players section
+            const joinedPlayersSection = match.joinedPlayers && match.joinedPlayers.length > 0 ? `
+                <div class="joined-players" style="margin: 0.75rem 0;">
+                    <h4 style="margin-bottom: 0.5rem; color: #333; font-size: 0.9rem;">👥 Joined Players (${match.joinedPlayers.length})</h4>
+                    <div class="players-list" style="max-height: 120px; overflow-y: auto; background: #f8f9fa; border-radius: 6px; padding: 0.5rem;">
+                        ${match.joinedPlayers.map((playerId, index) => {
+                            const isCurrentUser = playerId === currentUser.uid;
+                            const gameName = match.playerGameNames && match.playerGameNames[playerId] ? match.playerGameNames[playerId] : 'Unknown';
+                            return `
+                                <div class="player-item" style="display: flex; justify-content: space-between; align-items: center; padding: 0.25rem 0; font-size: 0.85rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                        <span style="color: #667eea; font-weight: 600;">${index + 1}.</span>
+                                        <span style="color: #333;">${isCurrentUser ? 'You' : 'Player'}</span>
+                                        ${isCurrentUser ? '<span style="color: #28a745; font-size: 0.75rem;">(You)</span>' : ''}
+                                    </div>
+                                    <div style="font-size: 0.8rem; color: #28a745; font-weight: 600;">${gameName}</div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            ` : '';
+            
+            card.innerHTML = `
+                ${matchImage}
+                <div class="match-header">
+                    <div class="match-title">${match.title || 'Untitled Match'}</div>
+                    <div class="match-status ${isLive ? 'status-live' : ''}">${isLive ? 'LIVE' : isJoined ? 'Joined' : 'Open'}</div>
+                </div>
+                <div class="match-details">
+                    <div class="match-detail">
+                        <i class="fas fa-gamepad"></i>
+                        <span>${match.game || 'Unknown Game'}</span>
+                    </div>
+                    <div class="match-detail">
+                        <i class="fas fa-clock"></i>
+                        <span>${startTimeString}</span>
+                    </div>
+                    <div class="match-detail">
+                        <i class="fas fa-users"></i>
+                        <span>${match.joinedPlayers ? match.joinedPlayers.length : 0}/${match.maxPlayers || 0}</span>
+                    </div>
+                    <div class="match-detail">
+                        <i class="fas fa-coins"></i>
+                        <span>₹${match.entryFee || 0}</span>
+                    </div>
+                </div>
+                ${descriptionSection}
+                ${joinedPlayersSection}
+                ${roomDetails}
+                <div class="match-actions">
+                    <button class="join-btn" ${isJoined || isFull ? 'disabled' : ''} onclick="joinMatch('${matchId}')">
+                        ${isJoined ? 'Already Joined' : isFull ? 'Match Full' : 'Join Match'}
+                    </button>
+                    ${isJoined ? `
+                        <button class="btn btn-secondary" onclick="viewMatchDetails('${matchId}')" style="margin-left: 0.5rem;">
+                            View Details
+                        </button>
+                    ` : ''}
+                </div>
+            `;
+            
+            return card;
+        }
+
+        async function joinMatch(matchId) {
+            if (!currentUser) return;
+            
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                
+                if (!matchDoc.exists() || !userDoc.exists()) {
+                    alert('Match or user not found');
+                    return;
+                }
+
+                const match = matchDoc.data();
+                const userData = userDoc.data();
+
+                // Check if user is banned
+                if (userData.banned) {
+                    alert('Your account has been banned. Please contact admin for support.');
+                    return;
+                }
+
+                // Check if match is full
+                if (match.joinedPlayers && match.joinedPlayers.length >= match.maxPlayers) {
+                    alert('Match is full');
+                    return;
+                }
+
+                // Check if user already joined
+                if (match.joinedPlayers && match.joinedPlayers.includes(currentUser.uid)) {
+                    alert('You have already joined this match');
+                    return;
+                }
+
+                // Check if user has sufficient balance
+                if (userData.addedBalance < match.entryFee) {
+                    alert('Insufficient balance. Please add money to your wallet.');
+                    return;
+                }
+
+                // Prompt user for game name/username
+                const gameName = prompt(`Enter your game name/username for ${match.title}:\n\nThis will be visible to admin and other players.`);
+                if (!gameName || gameName.trim() === '') {
+                    alert('Game name is required to join the match');
+                    return;
+                }
+
+                // Deduct entry fee from added balance
+                const newAddedBalance = userData.addedBalance - match.entryFee;
+
+                // Update user's balance
+                await updateDoc(doc(db, 'users', currentUser.uid), {
+                    addedBalance: newAddedBalance
+                });
+
+                // Add user to match with game name
+                const updatedJoinedPlayers = match.joinedPlayers || [];
+                updatedJoinedPlayers.push(currentUser.uid);
+
+                await updateDoc(doc(db, 'matches', matchId), {
+                    joinedPlayers: updatedJoinedPlayers
+                });
+
+                // Create transaction record
+                await addDoc(collection(db, 'transactions'), {
+                    userId: currentUser.uid,
+                    type: 'match_join',
+                    amount: -match.entryFee,
+                    description: `Joined match: ${match.title}`,
+                    matchId: matchId,
+                    gameName: gameName.trim(),
+                    timestamp: new Date()
+                });
+
+                // Store game name in match document for admin reference
+                await updateDoc(doc(db, 'matches', matchId), {
+                    [`playerGameNames.${currentUser.uid}`]: gameName.trim()
+                });
+
+                alert(`Successfully joined ${match.title}! Entry fee of ₹${match.entryFee} deducted.`);
+                loadMatches();
+                loadUserData();
+            } catch (error) {
+                console.error('Error joining match:', error);
+                alert('Failed to join match: ' + error.message);
+            }
+        }
+
+        async function loadLeaderboard() {
+            try {
+                const usersQuery = query(collection(db, 'users'), orderBy('winningBalance', 'desc'), limit(50));
+                const usersSnapshot = await getDocs(usersQuery);
+                
+                const leaderboardList = document.getElementById('leaderboardList');
+                leaderboardList.innerHTML = '';
+                
+                let rank = 1;
+                let topPlayerName = 'No players yet';
+                let topPlayerBalance = 0;
+                let userRank = 'Not ranked';
+                
+                usersSnapshot.forEach(doc => {
+                    const userData = doc.data();
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    
+                    // Check if this is the current user
+                    if (currentUser && doc.id === currentUser.uid) {
+                        item.classList.add('current-user');
+                        userRank = `#${rank}`;
+                    }
+                    
+                    // Set top player info
+                    if (rank === 1) {
+                        topPlayerName = userData.name || 'Unknown Player';
+                        topPlayerBalance = userData.winningBalance || 0;
+                    }
+                    
+                    // Add rank class for medals
+                    let rankClass = '';
+                    if (rank === 1) rankClass = 'gold';
+                    else if (rank === 2) rankClass = 'silver';
+                    else if (rank === 3) rankClass = 'bronze';
+                    
+                    item.innerHTML = `
+                        <div class="leaderboard-rank ${rankClass}">#${rank}</div>
+                        <div class="leaderboard-user">
+                            <div class="leaderboard-name">${userData.name || 'Unknown Player'}</div>
+                            <div class="leaderboard-email">${userData.email || 'No email'}</div>
+                        </div>
+                        <div class="leaderboard-score">₹${userData.winningBalance || 0}</div>
+                    `;
+                    
+                    leaderboardList.appendChild(item);
+                    rank++;
+                });
+                
+                // Update stats
+                document.getElementById('topPlayerName').textContent = topPlayerName;
+                document.getElementById('topPlayerBalance').textContent = `₹${topPlayerBalance}`;
+                document.getElementById('totalPlayers').textContent = usersSnapshot.size;
+                document.getElementById('userRank').textContent = userRank;
+                
+                // Load matches for match leaderboard
+                await loadMatchesForLeaderboard();
+                
+            } catch (error) {
+                console.error('Error loading leaderboard:', error);
+                document.getElementById('leaderboardList').innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Error loading leaderboard</p>';
+            }
+        }
+
+        async function loadMatchesForLeaderboard() {
+            try {
+                const matchesSnapshot = await getDocs(collection(db, 'matches'));
+                const matchSelector = document.getElementById('matchSelector');
+                matchSelector.innerHTML = '<option value="">Select a match...</option>';
+                
+                matchesSnapshot.forEach(doc => {
+                    const match = doc.data();
+                    if (match.status === 'completed' || match.status === 'ended') {
+                        const option = document.createElement('option');
+                        option.value = doc.id;
+                        option.textContent = `${match.title} (${match.game})`;
+                        matchSelector.appendChild(option);
+                    }
+                });
+            } catch (error) {
+                console.error('Error loading matches for leaderboard:', error);
+            }
+        }
+
+        async function loadMatchLeaderboard() {
+            const matchId = document.getElementById('matchSelector').value;
+            if (!matchId) {
+                document.getElementById('matchLeaderboardList').innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Select a match to view winners</p>';
+                return;
+            }
+            
+            try {
+                const matchDoc = await getDoc(doc(db, 'matches', matchId));
+                if (!matchDoc.exists()) {
+                    document.getElementById('matchLeaderboardList').innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Match not found</p>';
+                    return;
+                }
+                
+                const match = matchDoc.data();
+                const joinedPlayers = match.joinedPlayers || [];
+                const playerGameNames = match.playerGameNames || {};
+                
+                if (joinedPlayers.length === 0) {
+                    document.getElementById('matchLeaderboardList').innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">No players joined this match</p>';
+                    return;
+                }
+                
+                // Get player details and sort by winning balance (simulating match results)
+                const playersDetails = [];
+                for (const playerId of joinedPlayers) {
+                    try {
+                        const playerDoc = await getDoc(doc(db, 'users', playerId));
+                        if (playerDoc.exists()) {
+                            const playerData = playerDoc.data();
+                            playersDetails.push({
+                                id: playerId,
+                                name: playerData.name || 'Unknown',
+                                gameName: playerGameNames[playerId] || 'Not provided',
+                                winningBalance: playerData.winningBalance || 0
+                            });
+                        }
+                    } catch (error) {
+                        console.error('Error fetching player details:', error);
+                    }
+                }
+                
+                // Sort by winning balance (higher balance = better performance)
+                playersDetails.sort((a, b) => b.winningBalance - a.winningBalance);
+                
+                const matchLeaderboardList = document.getElementById('matchLeaderboardList');
+                matchLeaderboardList.innerHTML = '';
+                
+                playersDetails.forEach((player, index) => {
+                    const rank = index + 1;
+                    const item = document.createElement('div');
+                    item.className = 'leaderboard-item';
+                    
+                    // Check if this is the current user
+                    if (currentUser && player.id === currentUser.uid) {
+                        item.classList.add('current-user');
+                    }
+                    
+                    // Add rank class for medals
+                    let rankClass = '';
+                    if (rank === 1) rankClass = 'gold';
+                    else if (rank === 2) rankClass = 'silver';
+                    else if (rank === 3) rankClass = 'bronze';
+                    
+                    item.innerHTML = `
+                        <div class="leaderboard-rank ${rankClass}">#${rank}</div>
+                        <div class="leaderboard-user">
+                            <div class="leaderboard-name">${player.name}</div>
+                            <div class="leaderboard-email">Game: ${player.gameName}</div>
+                        </div>
+                        <div class="leaderboard-score">₹${player.winningBalance}</div>
+                    `;
+                    
+                    matchLeaderboardList.appendChild(item);
+                });
+                
+            } catch (error) {
+                console.error('Error loading match leaderboard:', error);
+                document.getElementById('matchLeaderboardList').innerHTML = '<p style="text-align: center; color: #666; padding: 2rem;">Error loading match results</p>';
+            }
+        }
+
+        function switchLeaderboardTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.leaderboard-tab').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Update content
+            document.querySelectorAll('.leaderboard-content').forEach(content => content.classList.remove('active'));
+            
+            if (tab === 'global') {
+                document.getElementById('globalLeaderboard').classList.add('active');
+            } else if (tab === 'matches') {
+                document.getElementById('matchLeaderboard').classList.add('active');
+            }
+        }
+
+        function refreshLeaderboard() {
+            const activeTab = document.querySelector('.leaderboard-tab.active');
+            if (activeTab.textContent === 'Global') {
+                loadLeaderboard();
+            } else {
+                loadMatchLeaderboard();
+            }
+        }
+
+        async function loadWalletData() {
+            if (!currentUser) return;
+            
+            try {
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    document.getElementById('addedBalance').textContent = `₹${userData.addedBalance || 0}`;
+                    document.getElementById('winningBalance').textContent = `₹${userData.winningBalance || 0}`;
+                }
+
+                // Load transactions with proper error handling
+                const transactionHistory = document.getElementById('transactionHistory');
+                transactionHistory.innerHTML = '';
+                
+                try {
+                    // First try with composite index
+                    const transactionsQuery = query(
+                        collection(db, 'transactions'),
+                        where('userId', '==', currentUser.uid),
+                        orderBy('timestamp', 'desc'),
+                        limit(20)
+                    );
+                    const transactionsSnapshot = await getDocs(transactionsQuery);
+                    
+                    transactionsSnapshot.forEach(doc => {
+                        const transaction = doc.data();
+                        const transactionItem = document.createElement('div');
+                        transactionItem.className = 'transaction-item';
+                        
+                        const amount = transaction.amount;
+                        const isPositive = amount >= 0;
+                        
+                        transactionItem.innerHTML = `
+                            <div class="transaction-info">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-date">${transaction.timestamp.toDate().toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                                ${isPositive ? '+' : ''}₹${Math.abs(amount)}
+                            </div>
+                        `;
+                        
+                        transactionHistory.appendChild(transactionItem);
+                    });
+                } catch (error) {
+                    console.log('Composite index not available, trying simple query:', error.message);
+                    
+                    // Fallback: get all transactions and filter client-side
+                    const transactionsSnapshot = await getDocs(collection(db, 'transactions'));
+                    const userTransactions = [];
+                    
+                    transactionsSnapshot.forEach(doc => {
+                        const transaction = doc.data();
+                        if (transaction.userId === currentUser.uid) {
+                            userTransactions.push({ id: doc.id, ...transaction });
+                        }
+                    });
+                    
+                    // Sort by timestamp (newest first)
+                    userTransactions.sort((a, b) => b.timestamp.toDate() - a.timestamp.toDate());
+                    
+                    // Display only the latest 20
+                    userTransactions.slice(0, 20).forEach(transaction => {
+                        const transactionItem = document.createElement('div');
+                        transactionItem.className = 'transaction-item';
+                        
+                        const amount = transaction.amount;
+                        const isPositive = amount >= 0;
+                        
+                        transactionItem.innerHTML = `
+                            <div class="transaction-info">
+                                <div class="transaction-description">${transaction.description}</div>
+                                <div class="transaction-date">${transaction.timestamp.toDate().toLocaleString()}</div>
+                            </div>
+                            <div class="transaction-amount ${isPositive ? 'positive' : 'negative'}">
+                                ${isPositive ? '+' : ''}₹${Math.abs(amount)}
+                            </div>
+                        `;
+                        
+                        transactionHistory.appendChild(transactionItem);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading wallet data:', error);
+                // Show a user-friendly message
+                const transactionHistory = document.getElementById('transactionHistory');
+                transactionHistory.innerHTML = '<div class="transaction-item"><div class="transaction-info"><div class="transaction-description">No transactions found</div></div></div>';
+            }
+        }
+
+        async function addMoney() {
+            const amount = parseInt(document.getElementById('addMoneyAmount').value);
+            const upiId = document.getElementById('upiId').value;
+            const utrNumber = document.getElementById('utrNumber').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            if (!upiId) {
+                alert('Please enter your UPI ID');
+                return;
+            }
+
+            try {
+                await addDoc(collection(db, 'addMoneyRequests'), {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    upiId: upiId,
+                    utrNumber: utrNumber,
+                    status: 'pending',
+                    timestamp: new Date()
+                });
+                
+                alert('Add money request submitted. Admin will verify and credit your wallet.');
+                document.getElementById('addMoneyAmount').value = '';
+                document.getElementById('upiId').value = '';
+                document.getElementById('utrNumber').value = '';
+            } catch (error) {
+                alert('Failed to submit request: ' + error.message);
+            }
+        }
+
+        async function withdrawMoney() {
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+            const upiId = document.getElementById('withdrawUpiId').value;
+
+            if (!amount || amount <= 0) {
+                alert('Please enter a valid amount');
+                return;
+            }
+
+            if (!upiId) {
+                alert('Please enter your UPI ID for withdrawal');
+                return;
+            }
+
+            try {
+                // Check if user has enough winning balance
+                const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const winningBalance = userData.winningBalance || 0;
+                    
+                    if (amount > winningBalance) {
+                        alert(`Insufficient winning balance. Available: ₹${winningBalance}`);
+                        return;
+                    }
+                }
+
+                await addDoc(collection(db, 'withdrawRequests'), {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    upiId: upiId,
+                    status: 'pending',
+                    timestamp: new Date()
+                });
+                
+                alert('Withdraw request submitted. Admin will process your withdrawal.');
+                document.getElementById('withdrawAmount').value = '';
+                document.getElementById('withdrawUpiId').value = '';
+            } catch (error) {
+                alert('Failed to submit withdraw request: ' + error.message);
+            }
+        }
+
+        async function showScanner() {
+            try {
+                const scannerDoc = await getDoc(doc(db, 'scannerSettings', 'current'));
+                if (scannerDoc.exists()) {
+                    const settings = scannerDoc.data();
+                    
+                    let modalContent = `
+                        <div style="text-align: center; padding: 1rem;">
+                            <h3 style="color: #667eea; margin-bottom: 1rem;">Payment Details</h3>
+                    `;
+                    
+                    // Show QR code image if available
+                    if (settings.qrCodeImageUrl) {
+                        modalContent += `
+                            <div style="margin-bottom: 1rem;">
+                                <img src="${settings.qrCodeImageUrl}" alt="QR Code" style="width: 200px; height: 200px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;">
+                            </div>
+                        `;
+                    } else if (settings.qrCode) {
+                        modalContent += `
+                            <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <p style="font-size: 0.9rem; color: #666;">QR Code Data:</p>
+                                <p style="font-family: monospace; font-size: 0.8rem; word-break: break-all;">${settings.qrCode}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Show instructions
+                    if (settings.instructions) {
+                        modalContent += `
+                            <div style="margin-bottom: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px;">
+                                <h4 style="margin-bottom: 0.5rem; color: #333;">Instructions:</h4>
+                                <p style="text-align: left; line-height: 1.5; color: #666;">${settings.instructions}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    // Show UPI ID
+                    if (settings.upiId) {
+                        modalContent += `
+                            <div style="margin-bottom: 1rem; padding: 1rem; background: #667eea; color: white; border-radius: 8px;">
+                                <h4 style="margin-bottom: 0.5rem;">UPI ID:</h4>
+                                <p style="font-size: 1.1rem; font-weight: 600; font-family: monospace;">${settings.upiId}</p>
+                            </div>
+                        `;
+                    }
+                    
+                    modalContent += `
+                            <p style="color: #666; font-size: 0.9rem; margin-top: 1rem;">
+                                After payment, please enter your UPI ID and UTR number above and submit the request.
+                            </p>
+                        </div>
+                    `;
+                    
+                    // Create modal
+                    const modal = document.createElement('div');
+                    modal.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        width: 100%;
+                        height: 100%;
+                        background: rgba(0,0,0,0.8);
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        z-index: 1000;
+                    `;
+                    modal.innerHTML = `
+                        <div style="background: white; border-radius: 12px; padding: 1rem; max-width: 90%; max-height: 90%; overflow-y: auto;">
+                            ${modalContent}
+                            <button onclick="this.parentElement.parentElement.remove()" style="background: #667eea; color: white; border: none; padding: 0.5rem 1rem; border-radius: 8px; cursor: pointer; margin-top: 1rem;">
+                                Close
+                            </button>
+                        </div>
+                    `;
+                    document.body.appendChild(modal);
+                    
+                } else {
+                    alert('Scanner settings not configured. Please contact admin.');
+                }
+            } catch (error) {
+                console.error('Error loading scanner settings:', error);
+                alert('Error loading payment details: ' + error.message);
+            }
+        }
+
+        function copyReferralCode() {
+            const referralCode = document.getElementById('referralCode').value;
+            navigator.clipboard.writeText(referralCode);
+            alert('Referral code copied to clipboard!');
+        }
+
+        // Banner carousel
+        async function loadBanners() {
+            const bannersQuery = query(collection(db, 'banners'), orderBy('order', 'asc'), limit(3));
+            const bannersSnapshot = await getDocs(bannersQuery);
+            
+            const bannerSlides = document.getElementById('bannerSlides');
+            const bannerDots = document.getElementById('bannerDots');
+            
+            bannerSlides.innerHTML = '';
+            bannerDots.innerHTML = '';
+            
+            let index = 0;
+            bannersSnapshot.forEach(doc => {
+                const banner = doc.data();
+                
+                const slide = document.createElement('div');
+                slide.className = `banner-slide ${index === 0 ? 'active' : ''}`;
+                slide.style.backgroundImage = `url(${banner.imageURL})`;
+                bannerSlides.appendChild(slide);
+                
+                const dot = document.createElement('div');
+                dot.className = `banner-dot ${index === 0 ? 'active' : ''}`;
+                dot.onclick = () => showBanner(index);
+                bannerDots.appendChild(dot);
+                
+                index++;
+            });
+            
+            if (index > 1) {
+                startBannerCarousel();
+            }
+        }
+
+        function startBannerCarousel() {
+            bannerInterval = setInterval(() => {
+                currentBannerIndex = (currentBannerIndex + 1) % document.querySelectorAll('.banner-slide').length;
+                showBanner(currentBannerIndex);
+            }, 5000);
+        }
+
+        function showBanner(index) {
+            document.querySelectorAll('.banner-slide').forEach((slide, i) => {
+                slide.classList.toggle('active', i === index);
+            });
+            
+            document.querySelectorAll('.banner-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === index);
+            });
+            
+            currentBannerIndex = index;
+        }
+
+        function initBannerCarousel() {
+            // Initialize with placeholder banners if none exist
+            const bannerSlides = document.getElementById('bannerSlides');
+            if (bannerSlides.children.length === 0) {
+                const placeholderSlide = document.createElement('div');
+                placeholderSlide.className = 'banner-slide active';
+                placeholderSlide.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                placeholderSlide.innerHTML = '<div style="display: flex; align-items: center; justify-content: center; height: 100%; color: white; font-size: 1.5rem; font-weight: 600;">Free Fire Tournament</div>';
+                bannerSlides.appendChild(placeholderSlide);
+            }
+        }
+
+        // Utility functions
+        function generateReferralCode() {
+            return Math.random().toString(36).substring(2, 8).toUpperCase();
+        }
+
+        // Load scanner settings on page load
+        async function loadScannerSettings() {
+            try {
+                const scannerDoc = await getDoc(doc(db, 'scannerSettings', 'current'));
+                if (scannerDoc.exists()) {
+                    const settings = scannerDoc.data();
+                    
+                    // Update QR code image
+                    const qrImage = document.getElementById('scannerQrImage');
+                    if (qrImage) {
+                        if (settings.qrCodeImageUrl) {
+                            qrImage.innerHTML = `<img src="${settings.qrCodeImageUrl}" alt="QR Code">`;
+                        } else {
+                            qrImage.innerHTML = '<i class="fas fa-qrcode"></i>';
+                        }
+                    }
+                    
+                    // Update instructions
+                    const instructions = document.getElementById('scannerInstructions');
+                    if (instructions) {
+                        instructions.textContent = settings.instructions || 'Click to view payment details';
+                    }
+                    
+                    // Update UPI ID
+                    const upiId = document.getElementById('scannerUpiId');
+                    if (upiId) {
+                        upiId.textContent = settings.upiId ? `UPI ID: ${settings.upiId}` : 'UPI ID: Not set';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading scanner settings:', error);
+            }
+        }
+
+        // Create a test notification for debugging
+        async function createTestNotification() {
+            try {
+                if (!currentUser) {
+                    alert('Please login first');
+                    return;
+                }
+                
+                const testNotification = {
+                    userId: currentUser.uid,
+                    title: 'Test Notification',
+                    message: 'This is a test notification to verify the system is working.',
+                    timestamp: new Date(),
+                    read: false
+                };
+                
+                await addDoc(collection(db, 'notifications'), testNotification);
+                alert('Test notification created successfully!');
+                
+                // Reload notifications
+                await loadNotifications();
+                
+            } catch (error) {
+                console.error('Error creating test notification:', error);
+                alert('Error creating test notification: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

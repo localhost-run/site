@@ -1,0 +1,436 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Admin function - checks for hardcoded admin UID and email
+    // Current admin: UID: lwrLF01gp1hcEwF0rZr4vu6oeju2, Email: rahulkashyap10091009@gmail.com
+    function isAdmin() {
+      return isAuthenticated() && 
+        (request.auth.uid in ['lwrLF01gp1hcEwF0rZr4vu6oeju2'] || 
+         request.auth.token.email in ['rahulkashyap10091009@gmail.com']);
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isValidUserData() {
+      return request.resource.data.keys().hasAll(['name', 'email', 'addedBalance', 'winningBalance', 'referralCode', 'referralEarnings', 'createdAt']) &&
+             request.resource.data.name is string &&
+             request.resource.data.name.size() > 0 &&
+             request.resource.data.email is string &&
+             request.resource.data.addedBalance is number &&
+             request.resource.data.addedBalance >= 0 &&
+             request.resource.data.winningBalance is number &&
+             request.resource.data.winningBalance >= 0 &&
+             request.resource.data.referralCode is string &&
+             request.resource.data.referralEarnings is number &&
+             request.resource.data.referralEarnings >= 0 &&
+             request.resource.data.createdAt is timestamp;
+    }
+    
+    function isValidMatchData() {
+      return request.resource.data.keys().hasAll(['title', 'game', 'startTime', 'entryFee', 'maxPlayers', 'description', 'createdAt']) &&
+             request.resource.data.title is string &&
+             request.resource.data.title.size() > 0 &&
+             request.resource.data.game is string &&
+             request.resource.data.startTime is timestamp &&
+             request.resource.data.entryFee is number &&
+             request.resource.data.entryFee >= 0 &&
+             request.resource.data.maxPlayers is number &&
+             request.resource.data.maxPlayers > 0 &&
+             request.resource.data.description is string &&
+             request.resource.data.createdAt is timestamp;
+    }
+    
+    function isValidTransactionData() {
+      return request.resource.data.keys().hasAll(['userId', 'type', 'amount', 'description', 'timestamp']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.type is string &&
+             request.resource.data.amount is number &&
+             request.resource.data.description is string &&
+             request.resource.data.timestamp is timestamp;
+    }
+    
+    function isValidAddMoneyRequest() {
+      return request.resource.data.keys().hasAll(['userId', 'amount', 'status', 'timestamp']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             request.resource.data.status is string &&
+             request.resource.data.status in ['pending', 'approved', 'rejected'] &&
+             request.resource.data.timestamp is timestamp;
+    }
+    
+    function isValidWithdrawRequest() {
+      return request.resource.data.keys().hasAll(['userId', 'amount', 'upiId', 'status', 'timestamp']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.amount is number &&
+             request.resource.data.amount > 0 &&
+             request.resource.data.upiId is string &&
+             request.resource.data.status is string &&
+             request.resource.data.status in ['pending', 'approved', 'rejected'] &&
+             request.resource.data.timestamp is timestamp;
+    }
+    
+    function isValidBannerData() {
+      return request.resource.data.keys().hasAll(['imageURL', 'order', 'createdAt']) &&
+             request.resource.data.imageURL is string &&
+             request.resource.data.imageURL.size() > 0 &&
+             request.resource.data.order is number &&
+             request.resource.data.order >= 1 &&
+             request.resource.data.order <= 3 &&
+             request.resource.data.createdAt is timestamp;
+    }
+
+    function isValidChatMessage() {
+      return request.resource.data.keys().hasAll(['userId', 'message', 'timestamp']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.message is string &&
+             request.resource.data.message.size() > 0 &&
+             request.resource.data.message.size() <= 500 &&
+             request.resource.data.timestamp is timestamp;
+    }
+
+    function isValidReferralData() {
+      return request.resource.data.keys().hasAll(['referrerId', 'referredUserId', 'referrerName', 'referredUserName', 'referrerEmail', 'referredUserEmail', 'referrerBonus', 'referredUserBonus', 'timestamp']) &&
+             request.resource.data.referrerId is string &&
+             request.resource.data.referredUserId is string &&
+             request.resource.data.referrerName is string &&
+             request.resource.data.referredUserName is string &&
+             request.resource.data.referrerEmail is string &&
+             request.resource.data.referredUserEmail is string &&
+             request.resource.data.referrerBonus is number &&
+             request.resource.data.referrerBonus >= 0 &&
+             request.resource.data.referredUserBonus is number &&
+             request.resource.data.referredUserBonus >= 0 &&
+             request.resource.data.timestamp is timestamp;
+    }
+
+    function isValidReferralSettings() {
+      return request.resource.data.keys().hasAll(['referrerBonus', 'newUserBonus', 'defaultSignupBonus']) &&
+             request.resource.data.referrerBonus is number &&
+             request.resource.data.referrerBonus >= 0 &&
+             request.resource.data.newUserBonus is number &&
+             request.resource.data.newUserBonus >= 0 &&
+             request.resource.data.defaultSignupBonus is number &&
+             request.resource.data.defaultSignupBonus >= 0;
+    }
+
+    function isValidMatchResult() {
+      return request.resource.data.keys().hasAll(['matchId', 'winnerId', 'prizeAmount', 'timestamp']) &&
+             request.resource.data.matchId is string &&
+             request.resource.data.winnerId is string &&
+             request.resource.data.prizeAmount is number &&
+             request.resource.data.prizeAmount >= 0 &&
+             request.resource.data.timestamp is timestamp;
+    }
+
+    function isValidNotification() {
+      return request.resource.data.keys().hasAll(['userId', 'title', 'message', 'timestamp']) &&
+             request.resource.data.userId is string &&
+             request.resource.data.title is string &&
+             request.resource.data.message is string &&
+             request.resource.data.timestamp is timestamp;
+    }
+
+    // Users collection
+    match /users/{userId} {
+        // Users can read their own data, admins can read all
+        allow read: if isOwner(userId) || isAdmin();
+        
+        // Users can create their own profile during signup
+        allow create: if isOwner(userId) && isValidUserData();
+        
+        // Users can update their own profile (name, photoURL)
+        // Admins can update any user's data including admin field and balance
+        allow update: if isOwner(userId) && 
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'photoURL', 'addedBalance', 'winningBalance', 'referralEarnings']) ||
+           isAdmin()) ||
+          isAdmin() && 
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['admin', 'addedBalance', 'winningBalance', 'referralEarnings', 'name', 'photoURL', 'banned']));
+        
+        // Only admins can delete users
+        allow delete: if isAdmin();
+    }
+
+    // Matches collection
+    match /matches/{matchId} {
+      // Anyone can read matches
+      allow read: if true;
+      
+      // Only admins can create matches
+      allow create: if isAdmin() && isValidMatchData();
+      
+      // Only admins can update matches, or users can join/leave matches
+      allow update: if isAdmin() || 
+        (isAuthenticated() && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['joinedPlayers']));
+      
+      // Only admins can delete matches
+      allow delete: if isAdmin();
+    }
+
+    // Transactions collection
+    match /transactions/{transactionId} {
+      // Users can read their own transactions, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own transactions (when joining matches)
+      // Admins can create transactions for any user
+      allow create: if isAuthenticated() && 
+        ((request.resource.data.userId == request.auth.uid && isValidTransactionData()) ||
+         (isAdmin() && isValidTransactionData()));
+      
+      // Only admins can update/delete transactions
+      allow update, delete: if isAdmin();
+    }
+
+    // Add Money Requests collection
+    match /addMoneyRequests/{requestId} {
+      // Users can read their own requests, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own requests
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid && 
+        isValidAddMoneyRequest();
+      
+      // Only admins can update (approve/reject) requests
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      
+      // Only admins can delete requests
+      allow delete: if isAdmin();
+    }
+
+    // Withdraw Requests collection
+    match /withdrawRequests/{requestId} {
+      // Users can read their own requests, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own requests
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid && 
+        isValidWithdrawRequest();
+      
+      // Only admins can update (approve/reject) requests
+      allow update: if isAdmin() && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status']);
+      
+      // Only admins can delete requests
+      allow delete: if isAdmin();
+    }
+
+    // Banners collection
+    match /banners/{bannerId} {
+      // Anyone can read banners
+      allow read: if true;
+      
+      // Only admins can create/update/delete banners
+      allow create, update, delete: if isAdmin() && isValidBannerData();
+    }
+
+    // Chat messages collection
+    match /chatMessages/{messageId} {
+      // Users can read messages, admins can read all
+      allow read: if isAuthenticated();
+      
+      // Users can create messages
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid &&
+        isValidChatMessage();
+      
+      // Users can update their own messages or admins can update any
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      
+      // Users can delete their own messages or admins can delete any
+      allow delete: if isOwner(resource.data.userId) || isAdmin();
+    }
+
+    // Referral codes collection
+    match /referrals/{referralId} {
+      // Users can read their own referrals, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.referrerId == request.auth.uid || 
+         resource.data.referredUserId == request.auth.uid || isAdmin());
+      
+      // System can create referrals during signup
+      allow create: if isAuthenticated() && isValidReferralData();
+      
+      // Only admins can update/delete referrals
+      allow update, delete: if isAdmin();
+    }
+
+    // Referral settings collection
+    match /referralSettings/{settingId} {
+      // Only admins can read/write referral settings
+      allow read, write: if isAdmin();
+    }
+
+    // Match results collection
+    match /matchResults/{resultId} {
+      // Anyone can read match results
+      allow read: if true;
+      
+      // Only admins can create/update/delete match results
+      allow create, update, delete: if isAdmin() && isValidMatchResult();
+    }
+
+    // Notifications collection
+    match /notifications/{notificationId} {
+      // Users can read notifications (for listing the collection)
+      // Client-side filtering ensures users only see their own notifications
+      allow read: if isAuthenticated();
+      
+      // Only admins can create notifications
+      allow create: if isAdmin();
+      
+      // Users can update their own notifications (mark as read)
+      allow update: if isOwner(resource.data.userId) && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      
+      // Only admins can delete notifications
+      allow delete: if isAdmin();
+    }
+
+    // Game sessions collection (for tracking active games)
+    match /gameSessions/{sessionId} {
+      // Anyone can read game sessions
+      allow read: if true;
+      
+      // Only admins can create/update/delete game sessions
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Tournament brackets collection
+    match /tournamentBrackets/{bracketId} {
+      // Anyone can read tournament brackets
+      allow read: if true;
+      
+      // Only admins can create/update/delete tournament brackets
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Player statistics collection
+    match /playerStats/{statId} {
+      // Users can read their own stats, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Only admins can create/update/delete player stats
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Match reports collection
+    match /matchReports/{reportId} {
+      // Users can read their own reports, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own reports
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // Only admins can update/delete reports
+      allow update, delete: if isAdmin();
+    }
+
+    // System settings collection
+    match /systemSettings/{settingId} {
+      // Only admins can read/write system settings
+      allow read, write: if isAdmin();
+    }
+
+    // Payment history collection
+    match /paymentHistory/{paymentId} {
+      // Users can read their own payment history, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Only admins can create/update/delete payment history
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Support tickets collection
+    match /supportTickets/{ticketId} {
+      // Users can read their own tickets, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own tickets
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own tickets, admins can update any
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      
+      // Only admins can delete tickets
+      allow delete: if isAdmin();
+    }
+
+    // Announcements collection
+    match /announcements/{announcementId} {
+      // Anyone can read announcements
+      allow read: if true;
+      
+      // Only admins can create/update/delete announcements
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Leaderboard collection (if separate from users)
+    match /leaderboard/{entryId} {
+      // Anyone can read leaderboard
+      allow read: if true;
+      
+      // Only admins can create/update/delete leaderboard entries
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Game logs collection (for debugging and analytics)
+    match /gameLogs/{logId} {
+      // Only admins can read/write game logs
+      allow read, write: if isAdmin();
+    }
+
+    // User sessions collection (for tracking user activity)
+    match /userSessions/{sessionId} {
+      // Users can read their own sessions, admins can read all
+      allow read: if isAuthenticated() && 
+        (resource.data.userId == request.auth.uid || isAdmin());
+      
+      // Users can create their own sessions
+      allow create: if isAuthenticated() && 
+        request.resource.data.userId == request.auth.uid;
+      
+      // Users can update their own sessions, admins can update any
+      allow update: if isOwner(resource.data.userId) || isAdmin();
+      
+      // Only admins can delete sessions
+      allow delete: if isAdmin();
+    }
+
+    // Backup data collection
+    match /backupData/{backupId} {
+      // Only admins can read/write backup data
+      allow read, write: if isAdmin();
+    }
+
+    // Scanner settings collection
+    match /scannerSettings/{settingId} {
+      // Anyone can read scanner settings
+      allow read: if true;
+      
+      // Only admins can create/update/delete scanner settings
+      allow create, update, delete: if isAdmin();
+    }
+  }
+}
