@@ -1,4 +1,4 @@
----
+1000
 id: forever-free
 title: The Forever Free Tier
 sidebar_label: The Forever Free Tier
