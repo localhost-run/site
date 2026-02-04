@@ -21,6 +21,11 @@ module.exports = {
       },
       items: [
         {
+          to: 'ai',
+          label: 'Nova AI',
+          position: 'left',
+        },
+        {
           to: 'docs/',
           activeBasePath: 'docs',
           label: 'Docs',
@@ -42,8 +47,12 @@ module.exports = {
       style: 'dark',
       links: [
         {
-          title: 'Docs',
+          title: 'Products',
           items: [
+            {
+              label: 'Nova AI',
+              to: 'ai',
+            },
             {
               label: 'The Basics',
               to: 'docs/',
@@ -51,10 +60,6 @@ module.exports = {
             {
               label: 'Custom Domains',
               to: 'docs/custom-domains',
-            },
-            {
-              label: 'Command Line Interface',
-              to: 'docs/cli',
             },
           ],
         },
