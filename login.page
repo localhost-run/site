@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Social Login</title>
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family: Arial, sans-serif;
+}
+
+body{
+    background:#f0f2f5;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.container{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:900px;
+    max-width:95%;
+}
+
+.left{
+    width:50%;
+}
+
+.left h1{
+    color:#1877f2;
+    font-size:60px;
+    margin-bottom:10px;
+}
+
+.left p{
+    font-size:26px;
+    color:#1c1e21;
+}
+
+.login-box{
+    width:400px;
+    background:#fff;
+    padding:25px;
+    border-radius:10px;
+    box-shadow:0 2px 15px rgba(0,0,0,0.15);
+}
+
+.login-box input{
+    width:100%;
+    padding:14px;
+    margin-bottom:15px;
+    border:1px solid #dddfe2;
+    border-radius:6px;
+    font-size:16px;
+}
+
+.login-btn{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:6px;
+    background:#1877f2;
+    color:#fff;
+    font-size:20px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.login-btn:hover{
+    background:#166fe5;
+}
+
+.forgot{
+    display:block;
+    text-align:center;
+    margin:15px 0;
+    text-decoration:none;
+    color:#1877f2;
+}
+
+hr{
+    margin:20px 0;
+    border:1px solid #ddd;
+}
+
+.create-btn{
+    display:block;
+    margin:auto;
+    background:#42b72a;
+    color:#fff;
+    border:none;
+    padding:14px 20px;
+    border-radius:6px;
+    font-size:17px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+.create-btn:hover{
+    background:#36a420;
+}
+
+.footer-text{
+    text-align:center;
+    margin-top:20px;
+    font-size:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+    <div class="left">
+        <h1>SocialBook</h1>
+        <p>Connect with friends and the world around you.</p>
+    </div>
+
+    <div class="login-box">
+        <form>
+            <input type="text" placeholder="Email or phone number" required>
+            <input type="password" placeholder="Password" required>
+
+            <button type="submit" class="login-btn">Log In</button>
+
+            <a href="#" class="forgot">Forgot Password?</a>
+
+            <hr>
+
+            <button type="button" class="create-btn">
+                Create New Account
+            </button>
+        </form>
+
+        <div class="footer-text">
+            Create a page for a celebrity, brand or business.
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
