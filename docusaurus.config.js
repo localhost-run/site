@@ -1,4 +1,5 @@
-module.exports = {
+merge.md
+  module.exports = {
   title: 'localhost.run',
   tagline: '<3 local dev',
   url: 'https://localhost.run',
