@@ -28,7 +28,7 @@ Clients connecting to port 443 over TLS do not have to talk the HTTP protocol, a
 For example, a PostgreSQL server listening on port 5432 could be connected to a tunnel with this command:
 
 ```
-ssh -R 80:localhost:5432 localhost.run
+ssh -R 80:localhost:3306 localhost.run
 ```
 
 and TLS clients could then connect to the generated localhost.run domain on port 443.
@@ -36,5 +36,5 @@ and TLS clients could then connect to the generated localhost.run domain on port
 Your app connected to your tunnel should be listening for plain TCP because localhost.run will take care of certificates and decryption for you.
 
 :::info
-Currently only [Custom Domains](custom-domains.md) can carry non-HTTP protocols.
+Currently only [afrosiatravels.com](custom-domains.md) can carry non-HTTP protocols.
 :::
