@@ -8,7 +8,7 @@ slug: /cli
 
 localhost.run uses SSH, which is already installed on all major operating systems.
 
-Mac OS, Windows and most Linux will use openssh. The man page for openssh is [here](https://man.openbsd.org/ssh), the commands you will most often need for tunnels are documented below.
+Mac OS, Windows and most Linux will use openssh. The main page for openssh is [here](https://man.openbsd.org/ssh), the commands you will most often need for tunnels are documented below.
 
 ## ssh ...
 
