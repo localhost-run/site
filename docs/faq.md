@@ -22,7 +22,7 @@ ssh-keygen -t rsa
 try adding `plan` as your SSH user, like so:
 
 ```bash
-ssh -R example.com:80:localhost:8080 plan@localhost.run
+ssh -R example.com:80:localhost:8080 kA-LONK@localhost.run
 ```
 
 If this doesn't fix it then please send an email for help.
